@@ -2,7 +2,7 @@
 <title>Quatro trilhas na escala de Mohs: talc 1, fluorite 4, quartz 7 e diamond 10, cada uma com mais cerimônia e mais prova</title>
 <rect width="960" height="420" rx="10" fill="#F3F4F1"/>
 <text x="40" y="52" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#1A1D20">Quatro trilhas, uma régua</text>
-<text x="40" y="76" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#596068">a dureza decide quanto rigor o harness aplica · durante o climb ela só sobe</text>
+<text x="40" y="76" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#596068">a dureza mede quanto custa um erro, não o tamanho do pedido · durante o climb ela só sobe</text>
 <rect x="40" y="96" width="213" height="300" rx="6" fill="#E7E8E3"/>
 <rect x="40" y="96" width="213" height="6" rx="3" fill="#8A8577"/>
 <text x="58" y="152" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="44" font-weight="900" fill="#8A8577">1</text>
@@ -33,8 +33,8 @@
 <text x="280" y="152" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="44" font-weight="900" fill="#5E8F72">4</text>
 <text x="310" y="140" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="800" fill="#1A1D20">fluorite</text>
 <text x="310" y="156" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#5E8F72">scout escolhe</text>
-<text x="280" y="184" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">até 3 arquivos,</text>
-<text x="280" y="201" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">nada sensível</text>
+<text x="280" y="184" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">um erro aparece logo</text>
+<text x="280" y="201" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">e não quebra nada</text>
 <text x="280" y="232" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#596068">plano</text>
 <text x="459" y="232" text-anchor="end" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1A1D20">scout</text>
 <rect x="280" y="242" width="179" height="1" fill="#CBCDC6"/>
@@ -57,9 +57,9 @@
 <rect x="484" y="96" width="213" height="6" rx="3" fill="#B85E76"/>
 <text x="502" y="152" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="44" font-weight="900" fill="#B85E76">7</text>
 <text x="532" y="140" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="800" fill="#1A1D20">quartz</text>
-<text x="532" y="156" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#B85E76">padrão</text>
-<text x="502" y="184" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">features comuns,</text>
-<text x="502" y="201" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">uma ou várias routes</text>
+<text x="532" y="156" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#B85E76">erro caro</text>
+<text x="502" y="184" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">um erro custa caro ou</text>
+<text x="502" y="201" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" fill="#1A1D20">demora a aparecer</text>
 <text x="502" y="232" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#596068">plano</text>
 <text x="681" y="232" text-anchor="end" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="600" fill="#1A1D20">scout</text>
 <rect x="502" y="242" width="179" height="1" fill="#CBCDC6"/>

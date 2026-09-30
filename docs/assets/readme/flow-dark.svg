@@ -1,62 +1,67 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 400" width="960" height="400" role="img" aria-label="Um climb, do survey ao descent: a line é assinada por você, o seal fica escondido do climber e a fall devolve à última anchor">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-label="Um climb, do survey ao descent: a line é assinada por você, o seal fica escondido do climber e a fall devolve à última anchor">
 <title>Um climb, do survey ao descent: a line é assinada por você, o seal fica escondido do climber e a fall devolve à última anchor</title>
-<rect width="960" height="400" rx="10" fill="#101214"/>
+<rect width="960" height="420" rx="10" fill="#101214"/>
 <text x="40" y="52" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#E6E7E2">Um climb, do basecamp ao summit</text>
 <text x="40" y="76" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#9CA3AA">cada etapa é código · o agente só faz a tarefa da vez · ◆ = decisão humana</text>
-<path d="M 70 300 L 161 279 L 252 258 L 343 237 L 434 216 L 525 195 L 616 174 L 707 153 L 798 132 L 889 111" fill="none" stroke="#FF6B30" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
-<path d="M 604 156 C 594 96, 539 111, 531 167" fill="none" stroke="#F2685C" stroke-width="1.6" stroke-dasharray="5 4"/>
-<path d="M 526 159 l 5 9 l 5 -9" fill="none" stroke="#F2685C" stroke-width="1.6"/>
-<text x="570.5" y="117" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#F2685C">fall</text>
-<circle cx="70" cy="300" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(58 288) scale(1)" color="#E6E7E2"><rect x="4" y="5" width="16" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M7 16 L10 11 L13 13.5 L17 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></g>
-<text x="70" y="340" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Survey</text>
-<text x="70" y="355" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">mapa, por código</text>
+<path d="M 64 336 L 147 319 L 230 302 L 313 285 L 396 268 L 479 251 L 562 234 L 645 217 L 728 200 L 811 183 L 894 166" fill="none" stroke="#FF6B30" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+<path d="M 633 199 C 623 139, 576 150, 568 206" fill="none" stroke="#F2685C" stroke-width="1.6" stroke-dasharray="5 4"/>
+<path d="M 563 198 l 5 9 l 5 -9" fill="none" stroke="#F2685C" stroke-width="1.6"/>
+<text x="603.5" y="156" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#F2685C">fall</text>
+<circle cx="64" cy="336" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(52 324) scale(1)" color="#E6E7E2"><rect x="4" y="5" width="16" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M7 16 L10 11 L13 13.5 L17 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></g>
+<text x="64" y="376" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Survey</text>
+<text x="64" y="391" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">mapa, por código</text>
 
-<circle cx="161" cy="279" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(149 267) scale(1)" color="#E6E7E2"><path d="M3.5 19.5 L12 5 L20.5 19.5 Z M12 19.5 V13.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></g>
-<text x="161" y="319" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Scout</text>
-<text x="161" y="334" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">plano e trilha</text>
+<circle cx="147" cy="319" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(135 307) scale(1)" color="#E6E7E2"><path d="M3.5 19.5 L12 5 L20.5 19.5 Z M12 19.5 V13.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></g>
+<text x="147" y="359" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Scout</text>
+<text x="147" y="374" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">plano e trilha</text>
 
-<circle cx="252" cy="258" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(240 246) scale(1)" color="#E6E7E2"><path d="M5 20 C9 16, 7 10, 12 9 S 16 6, 18.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18.5" cy="4.5" r="2" fill="currentColor"/></g>
-<text x="252" y="298" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Line</text>
-<text x="252" y="313" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">a spec</text>
-<path d="M 252 214 l 6 6 l -6 6 l -6 -6 Z" fill="#FF6B30"/>
-<text x="252" y="206" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#FF6B30">você assina</text>
-<circle cx="343" cy="237" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(331 225) scale(1)" color="#E6E7E2"><path d="M7 7 L17 17 M17 7 L7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></g>
-<text x="343" y="277" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Bolts</text>
-<text x="343" y="292" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">contrato</text>
-<text x="343" y="307" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
-<circle cx="434" cy="216" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(422 204) scale(1)" color="#E6E7E2"><path d="M12 3 L19.5 7.5 V16.5 L12 21 L4.5 16.5 V7.5 Z M12 3 V21 M4.5 7.5 L19.5 16.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></g>
-<text x="434" y="256" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Seal</text>
-<text x="434" y="271" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">testes ocultos</text>
-<text x="434" y="286" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
-<circle cx="525" cy="195" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(513 183) scale(1)" color="#E6E7E2"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/></g>
-<text x="525" y="235" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Pitches</text>
-<text x="525" y="250" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">anchor e commit</text>
+<circle cx="230" cy="302" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(218 290) scale(1)" color="#E6E7E2"><path d="M12 3 L19.5 7.5 V16.5 L12 21 L4.5 16.5 V7.5 Z M12 3 V21 M4.5 7.5 L19.5 16.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></g>
+<text x="230" y="342" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Repro</text>
+<text x="230" y="357" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">o bug num teste</text>
+<text x="230" y="372" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">só em fix</text>
+<circle cx="313" cy="285" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(301 273) scale(1)" color="#E6E7E2"><path d="M5 20 C9 16, 7 10, 12 9 S 16 6, 18.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18.5" cy="4.5" r="2" fill="currentColor"/></g>
+<text x="313" y="325" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Line</text>
+<text x="313" y="340" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">spec e decisões</text>
+<path d="M 313 241 l 6 6 l -6 6 l -6 -6 Z" fill="#FF6B30"/>
+<text x="313" y="233" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#FF6B30">você escolhe</text>
+<circle cx="396" cy="268" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(384 256) scale(1)" color="#E6E7E2"><path d="M7 7 L17 17 M17 7 L7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></g>
+<text x="396" y="308" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Bolts</text>
+<text x="396" y="323" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">contrato</text>
+<text x="396" y="338" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
+<circle cx="479" cy="251" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(467 239) scale(1)" color="#E6E7E2"><path d="M12 3 L19.5 7.5 V16.5 L12 21 L4.5 16.5 V7.5 Z M12 3 V21 M4.5 7.5 L19.5 16.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></g>
+<text x="479" y="291" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Seal</text>
+<text x="479" y="306" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">junto da subida</text>
+<text x="479" y="321" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
+<circle cx="562" cy="234" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(550 222) scale(1)" color="#E6E7E2"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/></g>
+<text x="562" y="274" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Pitches</text>
+<text x="562" y="289" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">anchor e commit</text>
 
-<circle cx="616" cy="174" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(604 162) scale(1)" color="#E6E7E2"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.6" fill="currentColor"/></g>
-<text x="616" y="214" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Send</text>
-<text x="616" y="229" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">roda o seal</text>
-<text x="616" y="244" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
-<circle cx="707" cy="153" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(695 141) scale(1)" color="#E6E7E2"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8.4" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.6" cy="12" r="1.5" fill="currentColor"/></g>
-<text x="707" y="193" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Inspection</text>
-<text x="707" y="208" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">revisores</text>
-<text x="707" y="223" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
-<circle cx="798" cy="132" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(786 120) scale(1)" color="#E6E7E2"><path d="M7 21 V3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 4 L18.5 7.5 L7 11 Z" fill="currentColor"/></g>
-<text x="798" y="172" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Summit</text>
-<text x="798" y="187" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">a entrega</text>
-<path d="M 798 88 l 6 6 l -6 6 l -6 -6 Z" fill="#FF6B30"/>
-<text x="798" y="80" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#FF6B30">talc e diamond</text>
-<circle cx="889" cy="111" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
-<g transform="translate(877 99) scale(1)" color="#E6E7E2"><path d="M7 5 L12 10 L17 5 M7 12.5 L12 17.5 L17 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
-<text x="889" y="151" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Descent</text>
-<text x="889" y="166" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">retrospectiva</text>
-<text x="889" y="181" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
+<circle cx="645" cy="217" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(633 205) scale(1)" color="#E6E7E2"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.6" fill="currentColor"/></g>
+<text x="645" y="257" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Send</text>
+<text x="645" y="272" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">seal e repro</text>
+
+<circle cx="728" cy="200" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(716 188) scale(1)" color="#E6E7E2"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8.4" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.6" cy="12" r="1.5" fill="currentColor"/></g>
+<text x="728" y="240" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Inspection</text>
+<text x="728" y="255" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">revisores</text>
+<text x="728" y="270" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
+<circle cx="811" cy="183" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(799 171) scale(1)" color="#E6E7E2"><path d="M7 21 V3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 4 L18.5 7.5 L7 11 Z" fill="currentColor"/></g>
+<text x="811" y="223" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Summit</text>
+<text x="811" y="238" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">a entrega</text>
+<path d="M 811 139 l 6 6 l -6 6 l -6 -6 Z" fill="#FF6B30"/>
+<text x="811" y="131" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#FF6B30">se há decisões</text>
+<circle cx="894" cy="166" r="22" fill="#101214" stroke="#E6E7E2" stroke-width="1.6"/>
+<g transform="translate(882 154) scale(1)" color="#E6E7E2"><path d="M7 5 L12 10 L17 5 M7 12.5 L12 17.5 L17 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></g>
+<text x="894" y="206" text-anchor="middle" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="15" font-weight="800" fill="#E6E7E2">Descent</text>
+<text x="894" y="221" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">se houve atrito</text>
+<text x="894" y="236" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="9.5" fill="#E594AA">quartz+</text>
 </svg>

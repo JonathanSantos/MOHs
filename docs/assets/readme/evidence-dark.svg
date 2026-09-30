@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 250" width="960" height="250" role="img" aria-label="A régua de evidência de cada summit: nenhuma, fraca (só checagens sem teste), média (um tipo de prova) e forte (dois tipos de prova)">
+<title>A régua de evidência de cada summit: nenhuma, fraca (só checagens sem teste), média (um tipo de prova) e forte (dois tipos de prova)</title>
+<rect width="960" height="250" rx="10" fill="#101214"/>
+<text x="40" y="52" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#E6E7E2">Todo summit diz o que o provou</text>
+<text x="40" y="76" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#9CA3AA">o agente nunca diz que passou: o Basecamp roda e conta · evidência fraca pede que você revise o diff</text>
+<rect x="40" y="100" width="213" height="14" rx="3" fill="#F2685C" opacity="0.35"/>
+<text x="40" y="146" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="800" fill="#F2685C">nenhuma</text>
+<text x="40" y="172" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">nada rodou além</text>
+<text x="40" y="190" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">do commit</text>
+<rect x="262" y="100" width="213" height="14" rx="3" fill="#E3B04B" opacity="0.55"/>
+<text x="262" y="146" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="800" fill="#E3B04B">fraca</text>
+<text x="262" y="172" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">só checagens sem teste:</text>
+<text x="262" y="190" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">build, lint, typecheck</text>
+<rect x="484" y="100" width="213" height="14" rx="3" fill="#62BFE2" opacity="0.75"/>
+<text x="484" y="146" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="800" fill="#62BFE2">média</text>
+<text x="484" y="172" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">um tipo de prova: testes</text>
+<text x="484" y="190" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">do projeto, seal ou repro</text>
+<rect x="706" y="100" width="213" height="14" rx="3" fill="#86C29E" opacity="0.9500000000000001"/>
+<text x="706" y="146" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="22" font-weight="800" fill="#86C29E">forte</text>
+<text x="706" y="172" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">dois tipos: seal, testes</text>
+<text x="706" y="190" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">travados ou repro, mais os</text>
+<text x="706" y="208" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">testes do projeto</text>
+</svg>

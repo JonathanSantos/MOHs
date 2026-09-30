@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 420" width="960" height="420" role="img" aria-label="Como medimos o harness: o mesmo pedido para cinco braços isolados, a mesma suíte escondida, custo, revisão cega, e um gym de issues reais">
+<title>Como medimos o harness: o mesmo pedido para cinco braços isolados, a mesma suíte escondida, custo, revisão cega, e um gym de issues reais</title>
+<rect width="960" height="420" rx="10" fill="#101214"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#9CA3AA"/></marker></defs><text x="40" y="52" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#E6E7E2">Como medimos se o harness ajuda</text>
+<text x="40" y="76" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#9CA3AA">npm run validate · um subagente por braço, cada um numa pasta isolada, todos com o mesmo modelo</text>
+<rect x="40" y="170" width="210" height="92" rx="6" fill="#191C1F"/>
+<text x="56" y="198" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="17" font-weight="800" fill="#E6E7E2">Pedido padronizado</text>
+<text x="56" y="222" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="400" fill="#9CA3AA">e uma suíte escondida,</text>
+<text x="56" y="239" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="400" fill="#9CA3AA">aprovada antes de rodar</text>
+<rect x="300" y="116" width="160" height="30" rx="15" fill="#101214" stroke="#E6E7E2"/>
+<text x="380" y="136" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="600" fill="#E6E7E2">direto</text>
+<path d="M 250 216 C 274 216, 272 131, 296 131" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<path d="M 464 131 C 490 131, 496 216, 520 216" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<rect x="300" y="156" width="160" height="30" rx="15" fill="#101214" stroke="#E6E7E2"/>
+<text x="380" y="176" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="600" fill="#E6E7E2">placebo</text>
+<path d="M 250 216 C 274 216, 272 171, 296 171" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<path d="M 464 171 C 490 171, 496 216, 520 216" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<rect x="300" y="196" width="160" height="30" rx="15" fill="#101214" stroke="#FF6B30"/>
+<text x="380" y="216" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="600" fill="#FF6B30">mohs-fix</text>
+<path d="M 250 216 C 274 216, 272 211, 296 211" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<path d="M 464 211 C 490 211, 496 216, 520 216" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<rect x="300" y="236" width="160" height="30" rx="15" fill="#101214" stroke="#FF6B30"/>
+<text x="380" y="256" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="600" fill="#FF6B30">mohs</text>
+<path d="M 250 216 C 274 216, 272 251, 296 251" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<path d="M 464 251 C 490 251, 496 216, 520 216" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<rect x="300" y="276" width="160" height="30" rx="15" fill="#101214" stroke="#FF6B30"/>
+<text x="380" y="296" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="12" font-weight="600" fill="#FF6B30">mohs-solo</text>
+<path d="M 250 216 C 274 216, 272 291, 296 291" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<path d="M 464 291 C 490 291, 496 216, 520 216" fill="none" stroke="#9CA3AA" stroke-width="1.2"/>
+<rect x="524" y="146" width="396" height="140" rx="6" fill="#191C1F"/>
+<text x="540" y="174" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="17" font-weight="800" fill="#E6E7E2">Mesma régua para todos</text>
+<text x="540" y="200" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="400" fill="#9CA3AA">suíte escondida · testes do projeto · tamanho do diff</text>
+<text x="540" y="219" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="400" fill="#9CA3AA">tokens e tempo, subagentes incluídos (das transcrições)</text>
+<text x="540" y="238" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="400" fill="#9CA3AA">espera humana · trilha · evidência</text>
+<text x="540" y="257" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12" font-weight="400" fill="#9CA3AA">revisão cega: entregas anônimas, rubrica fixa</text>
+<rect x="40" y="330" width="880" height="64" rx="6" fill="#132C37"/>
+<text x="58" y="356" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" font-weight="600" fill="#BCE5F4">GYM DE ISSUES REAIS · validate issue</text>
+<text x="58" y="378" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#BCE5F4">base = o commit de antes da correção · suíte escondida = os testes da correção · só entra se falha na base e passa na referência</text>
+</svg>

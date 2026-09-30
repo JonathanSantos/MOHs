@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 346" width="960" height="346" role="img" aria-label="Quatro tipos de pedido e a prova de cada um: fix com reprodução do bug, feature protegendo o que existe, refactor com os testes antigos intactos, código novo com decisões">
+<title>Quatro tipos de pedido e a prova de cada um: fix com reprodução do bug, feature protegendo o que existe, refactor com os testes antigos intactos, código novo com decisões</title>
+<rect width="960" height="346" rx="10" fill="#101214"/>
+<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#9CA3AA"/></marker></defs><text x="40" y="52" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#E6E7E2">O que o pedido pede decide o que prova a entrega</text>
+<text x="40" y="76" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#9CA3AA">o scout diz o tipo (intent) junto com a hardness · as checagens de cada tipo somam às da trilha</text>
+<rect x="40" y="96" width="213" height="226" rx="6" fill="#191C1F"/>
+<rect x="40" y="96" width="213" height="6" rx="3" fill="#FF6B30"/>
+<text x="58" y="142" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="900" fill="#E6E7E2">fix</text>
+<circle cx="183" cy="132" r="7" fill="#F2685C"/><path d="M 195 132 h 22" stroke="#9CA3AA" stroke-width="1.6" marker-end="url(#arrow)"/><circle cx="227" cy="132" r="7" fill="#86C29E"/>
+<text x="58" y="164" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#FF6B30">correção de bug</text>
+<text x="58" y="196" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">o reproducer prova o bug</text>
+<text x="58" y="214" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">num teste que falha hoje</text>
+<rect x="58" y="240" width="177" height="1" fill="#2E3237"/>
+<text x="58" y="264" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">vermelho na base, verde na</text>
+<text x="58" y="282" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">entrega; o teste fica no</text>
+<text x="58" y="300" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">projeto como regressão</text>
+<rect x="262" y="96" width="213" height="226" rx="6" fill="#191C1F"/>
+<rect x="262" y="96" width="213" height="6" rx="3" fill="#FF6B30"/>
+<text x="280" y="142" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="900" fill="#E6E7E2">feature</text>
+<path d="M 409 138 h 18 M 418 129 v 18" stroke="#E6E7E2" stroke-width="2"/><rect x="433" y="124" width="16" height="16" rx="2" fill="none" stroke="#E6E7E2" stroke-width="1.6"/>
+<text x="280" y="164" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#FF6B30">em código que existe</text>
+<text x="280" y="196" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">a line diz o que muda e</text>
+<text x="280" y="214" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">o que não pode mudar</text>
+<rect x="280" y="240" width="177" height="1" fill="#2E3237"/>
+<text x="280" y="264" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">o belayer espelha a suíte</text>
+<text x="280" y="282" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">que já existe nos casos</text>
+<text x="280" y="300" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">vizinhos</text>
+<rect x="484" y="96" width="213" height="226" rx="6" fill="#191C1F"/>
+<rect x="484" y="96" width="213" height="6" rx="3" fill="#FF6B30"/>
+<text x="502" y="142" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="900" fill="#E6E7E2">refactor</text>
+<rect x="633" y="124" width="16" height="16" rx="2" fill="none" stroke="#E6E7E2" stroke-width="1.6"/><path d="M 637 132 l 3 3 l 6 -7" fill="none" stroke="#86C29E" stroke-width="2"/><rect x="657" y="124" width="16" height="16" rx="2" fill="none" stroke="#E6E7E2" stroke-width="1.6"/><path d="M 661 132 l 3 3 l 6 -7" fill="none" stroke="#86C29E" stroke-width="2"/>
+<text x="502" y="164" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#FF6B30">sem mudar comportamento</text>
+<text x="502" y="196" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">os testes que já existiam</text>
+<text x="502" y="214" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">são a prova</text>
+<rect x="502" y="240" width="177" height="1" fill="#2E3237"/>
+<text x="502" y="264" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">um teste antigo mudado,</text>
+<text x="502" y="282" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">renomeado ou apagado faz</text>
+<text x="502" y="300" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">a anchor voltar</text>
+<rect x="706" y="96" width="213" height="226" rx="6" fill="#191C1F"/>
+<rect x="706" y="96" width="213" height="6" rx="3" fill="#FF6B30"/>
+<text x="724" y="142" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="26" font-weight="900" fill="#E6E7E2">new</text>
+<path d="M 875 122 l 8 10 l -8 10 l -8 -10 Z" fill="#FF6B30"/>
+<text x="724" y="164" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10.5" fill="#FF6B30">código novo</text>
+<text x="724" y="196" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">nada antigo a proteger:</text>
+<text x="724" y="214" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="13" font-weight="600" fill="#E6E7E2">as decisões pesam mais</text>
+<rect x="724" y="240" width="177" height="1" fill="#2E3237"/>
+<text x="724" y="264" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">cada escolha aberta chega</text>
+<text x="724" y="282" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">a você com opções, antes</text>
+<text x="724" y="300" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" font-weight="400" fill="#9CA3AA">do primeiro código</text>
+</svg>

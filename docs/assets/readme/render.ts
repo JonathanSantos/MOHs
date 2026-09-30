@@ -140,17 +140,18 @@ function flow(t: Tokens): string {
   const stages: Stage[] = [
     { name: "Survey", note: "mapa, por código", icon: "croqui" },
     { name: "Scout", note: "plano e trilha", icon: "base" },
-    { name: "Line", note: "a spec", icon: "tracado", human: "você assina" },
+    { name: "Repro", note: "o bug num teste", icon: "selo", tracks: "só em fix" },
+    { name: "Line", note: "spec e decisões", icon: "tracado", human: "você escolhe" },
     { name: "Bolts", note: "contrato", icon: "grampo", tracks: "quartz+" },
-    { name: "Seal", note: "testes ocultos", icon: "selo", tracks: "quartz+" },
+    { name: "Seal", note: "junto da subida", icon: "selo", tracks: "quartz+" },
     { name: "Pitches", note: "anchor e commit", icon: "parada" },
-    { name: "Send", note: "roda o seal", icon: "cadena", tracks: "quartz+" },
+    { name: "Send", note: "seal e repro", icon: "cadena" },
     { name: "Inspection", note: "revisores", icon: "vistoria", tracks: "quartz+" },
-    { name: "Summit", note: "a entrega", icon: "cume", human: "talc e diamond" },
-    { name: "Descent", note: "retrospectiva", icon: "descida", tracks: "quartz+" },
+    { name: "Summit", note: "a entrega", icon: "cume", human: "se há decisões" },
+    { name: "Descent", note: "se houve atrito", icon: "descida", tracks: "quartz+" },
   ];
-  const x = (i: number) => 70 + i * 91;
-  const y = (i: number) => 300 - i * 21;
+  const x = (i: number) => 64 + i * 83;
+  const y = (i: number) => 336 - i * 17;
   const rope = stages.map((_, i) => `${i ? "L" : "M"} ${x(i)} ${y(i)}`).join(" ");
   const nodes = stages
     .map((stage, i) => {
@@ -170,15 +171,15 @@ ${icon(stage.icon, cx - 12, cy - 12, 24, t.graphite)}
 ${tracks}${human}`;
     })
     .join("\n");
-  const sendX = x(6);
-  const pitchX = x(5);
+  const sendX = x(7);
+  const pitchX = x(6);
   // A fall volta por cima da corda, do send à última anchor: por baixo ela cruzaria os rótulos.
-  const fall = `<path d="M ${sendX - 12} ${y(6) - 18} C ${sendX - 22} ${y(6) - 78}, ${pitchX + 14} ${y(5) - 84}, ${pitchX + 6} ${y(5) - 28}" fill="none" stroke="${t.crit}" stroke-width="1.6" stroke-dasharray="5 4"/>
-<path d="M ${pitchX + 1} ${y(5) - 36} l 5 9 l 5 -9" fill="none" stroke="${t.crit}" stroke-width="1.6"/>
-<text x="${(sendX + pitchX) / 2}" y="${y(5) - 78}" text-anchor="middle" font-family="${MONO}" font-size="10" font-weight="600" fill="${t.crit}">fall</text>`;
+  const fall = `<path d="M ${sendX - 12} ${y(7) - 18} C ${sendX - 22} ${y(7) - 78}, ${pitchX + 14} ${y(6) - 84}, ${pitchX + 6} ${y(6) - 28}" fill="none" stroke="${t.crit}" stroke-width="1.6" stroke-dasharray="5 4"/>
+<path d="M ${pitchX + 1} ${y(6) - 36} l 5 9 l 5 -9" fill="none" stroke="${t.crit}" stroke-width="1.6"/>
+<text x="${(sendX + pitchX) / 2}" y="${y(6) - 78}" text-anchor="middle" font-family="${MONO}" font-size="10" font-weight="600" fill="${t.crit}">fall</text>`;
   return svg(
     960,
-    400,
+    420,
     "Um climb, do survey ao descent: a line é assinada por você, o seal fica escondido do climber e a fall devolve à última anchor",
     t,
     `<text x="40" y="52" font-family="${DISPLAY}" font-size="28" font-weight="800" fill="${t.graphite}">Um climb, do basecamp ao summit</text>
@@ -218,7 +219,7 @@ function tracks(t: Tokens): string {
       mineral: "fluorite",
       mohs: 4,
       command: "scout escolhe",
-      when: ["até 3 arquivos,", "nada sensível"],
+      when: ["um erro aparece logo", "e não quebra nada"],
       rows: [
         ["plano", "scout"],
         ["line", "curta"],
@@ -231,8 +232,8 @@ function tracks(t: Tokens): string {
     {
       mineral: "quartz",
       mohs: 7,
-      command: "padrão",
-      when: ["features comuns,", "uma ou várias routes"],
+      command: "erro caro",
+      when: ["um erro custa caro ou", "demora a aparecer"],
       rows: [
         ["plano", "scout"],
         ["line", "completa"],
@@ -286,7 +287,7 @@ ${rows}`;
     "Quatro trilhas na escala de Mohs: talc 1, fluorite 4, quartz 7 e diamond 10, cada uma com mais cerimônia e mais prova",
     t,
     `<text x="40" y="52" font-family="${DISPLAY}" font-size="28" font-weight="800" fill="${t.graphite}">Quatro trilhas, uma régua</text>
-<text x="40" y="76" font-family="${MONO}" font-size="11" fill="${t.slate}">a dureza decide quanto rigor o harness aplica · durante o climb ela só sobe</text>
+<text x="40" y="76" font-family="${MONO}" font-size="11" fill="${t.slate}">a dureza mede quanto custa um erro, não o tamanho do pedido · durante o climb ela só sobe</text>
 ${cards}`,
   );
 }
@@ -332,7 +333,236 @@ ${arrow("M 150 288 L 150 220", t.warn, true)}
   );
 }
 
-const IMAGES: Record<string, (t: Tokens) => string> = { hero, flow, tracks, seal };
+/** Lines of text, one per row. */
+function lines(
+  x: number,
+  y: number,
+  rows: readonly string[],
+  size: number,
+  color: string,
+  family = BODY,
+  gap = size + 5,
+  weight = 400,
+): string {
+  return rows
+    .map(
+      (row, i) =>
+        `<text x="${x}" y="${y + i * gap}" font-family="${family}" font-size="${size}" font-weight="${weight}" fill="${color}">${esc(row)}</text>`,
+    )
+    .join("\n");
+}
+
+function heading(t: Tokens, title: string, subtitle: string): string {
+  return `<text x="40" y="52" font-family="${DISPLAY}" font-size="28" font-weight="800" fill="${t.graphite}">${esc(title)}</text>
+<text x="40" y="76" font-family="${MONO}" font-size="11" fill="${t.slate}">${esc(subtitle)}</text>`;
+}
+
+/** Red before, green after: the little proof glyph of a reproduction. */
+function redGreen(t: Tokens, x: number, y: number): string {
+  return `<circle cx="${x}" cy="${y}" r="7" fill="${t.crit}"/><path d="M ${x + 12} ${y} h 22" stroke="${t.slate}" stroke-width="1.6" marker-end="url(#arrow)"/><circle cx="${x + 44}" cy="${y}" r="7" fill="${t.minerals.fluorite.main}"/>`;
+}
+
+const ARROW = (t: Tokens) =>
+  `<defs><marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="${t.slate}"/></marker></defs>`;
+
+interface IntentCard {
+  key: string;
+  label: string;
+  proof: string[];
+  checks: string[];
+}
+
+/** The four kinds of request and the proof that fits each one. */
+function intents(t: Tokens): string {
+  const cards: IntentCard[] = [
+    {
+      key: "fix",
+      label: "correção de bug",
+      proof: ["o reproducer prova o bug", "num teste que falha hoje"],
+      checks: ["vermelho na base, verde na", "entrega; o teste fica no", "projeto como regressão"],
+    },
+    {
+      key: "feature",
+      label: "em código que existe",
+      proof: ["a line diz o que muda e", "o que não pode mudar"],
+      checks: ["o belayer espelha a suíte", "que já existe nos casos", "vizinhos"],
+    },
+    {
+      key: "refactor",
+      label: "sem mudar comportamento",
+      proof: ["os testes que já existiam", "são a prova"],
+      checks: ["um teste antigo mudado,", "renomeado ou apagado faz", "a anchor voltar"],
+    },
+    {
+      key: "new",
+      label: "código novo",
+      proof: ["nada antigo a proteger:", "as decisões pesam mais"],
+      checks: ["cada escolha aberta chega", "a você com opções, antes", "do primeiro código"],
+    },
+  ];
+  const width = 213;
+  const body = cards
+    .map((card, i) => {
+      const x = 40 + i * (width + 9);
+      const glyph =
+        card.key === "fix"
+          ? redGreen(t, x + width - 70, 132)
+          : card.key === "refactor"
+            ? `<rect x="${x + width - 64}" y="124" width="16" height="16" rx="2" fill="none" stroke="${t.graphite}" stroke-width="1.6"/><path d="M ${x + width - 60} 132 l 3 3 l 6 -7" fill="none" stroke="${t.minerals.fluorite.main}" stroke-width="2"/><rect x="${x + width - 40}" y="124" width="16" height="16" rx="2" fill="none" stroke="${t.graphite}" stroke-width="1.6"/><path d="M ${x + width - 36} 132 l 3 3 l 6 -7" fill="none" stroke="${t.minerals.fluorite.main}" stroke-width="2"/>`
+            : card.key === "new"
+              ? `<path d="M ${x + width - 44} 122 l 8 10 l -8 10 l -8 -10 Z" fill="${t.rope}"/>`
+              : `<path d="M ${x + width - 66} 138 h 18 M ${x + width - 57} 129 v 18" stroke="${t.graphite}" stroke-width="2"/><rect x="${x + width - 42}" y="124" width="16" height="16" rx="2" fill="none" stroke="${t.graphite}" stroke-width="1.6"/>`;
+      return `<rect x="${x}" y="96" width="${width}" height="226" rx="6" fill="${t.granite}"/>
+<rect x="${x}" y="96" width="${width}" height="6" rx="3" fill="${t.rope}"/>
+<text x="${x + 18}" y="142" font-family="${DISPLAY}" font-size="26" font-weight="900" fill="${t.graphite}">${card.key}</text>
+${glyph}
+<text x="${x + 18}" y="164" font-family="${MONO}" font-size="10.5" fill="${t.rope}">${esc(card.label)}</text>
+${lines(x + 18, 196, card.proof, 13, t.graphite, BODY, 18, 600)}
+<rect x="${x + 18}" y="240" width="${width - 36}" height="1" fill="${t.vein}"/>
+${lines(x + 18, 264, card.checks, 12.5, t.slate, BODY, 18)}`;
+    })
+    .join("\n");
+  return svg(
+    960,
+    346,
+    "Quatro tipos de pedido e a prova de cada um: fix com reprodução do bug, feature protegendo o que existe, refactor com os testes antigos intactos, código novo com decisões",
+    t,
+    `${ARROW(t)}${heading(t, "O que o pedido pede decide o que prova a entrega", "o scout diz o tipo (intent) junto com a hardness · as checagens de cada tipo somam às da trilha")}
+${body}`,
+  );
+}
+
+/** How a decision reaches the human: the recommended first, another option or their own words, then a scenario. */
+function decisions(t: Tokens): string {
+  const radio = (x: number, y: number, on: boolean) =>
+    `<circle cx="${x}" cy="${y}" r="7" fill="none" stroke="${on ? t.rope : t.slate}" stroke-width="1.6"/>${on ? `<circle cx="${x}" cy="${y}" r="3.6" fill="${t.rope}"/>` : ""}`;
+  const option = (y: number, on: boolean, letter: string, choice: string, why: string) =>
+    `${radio(420, y - 4, on)}<text x="436" y="${y}" font-family="${BODY}" font-size="13" font-weight="600" fill="${t.graphite}">${letter}</text><text x="${letter.length > 2 ? 548 : 456}" y="${y}" font-family="${BODY}" font-size="13" fill="${t.graphite}">${esc(choice)}</text><text x="436" y="${y + 17}" font-family="${BODY}" font-size="11.5" fill="${t.slate}">${esc(why)}</text>`;
+  return svg(
+    960,
+    470,
+    "Uma decisão da line: a pergunta com a situação, a recomendada marcada, outras opções, uma resposta livre e o aviso quando a recomendada contraria o pedido; assinada, vira um cenário QUANDO/ENTÃO",
+    t,
+    `${ARROW(t)}${heading(t, "As decisões chegam a você com opções", "o setter recomenda, você escolhe ao assinar · na CLI (mohs sign D1=B) ou no Lookout")}
+<rect x="40" y="100" width="330" height="330" rx="6" fill="${t.granite}"/>
+<text x="58" y="128" font-family="${MONO}" font-size="10.5" font-weight="600" fill="${t.slate}">LINE · RASCUNHO</text>
+${lines(58, 158, ["# Links de compartilhamento", "", "QUANDO a pessoa clica em", "Compartilhar ENTÃO recebe um", "link /s/<token> copiado.", "", "QUANDO alguém abre um link", "expirado ENTÃO vê 'Este link", "expirou'."], 12.5, t.graphite, MONO, 19)}
+<rect x="394" y="100" width="526" height="250" rx="6" fill="${t.chalk}" stroke="${t.vein}"/>
+<text x="412" y="128" font-family="${DISPLAY}" font-size="16" font-weight="800" fill="${t.graphite}">D1 · Quem pode desativar um link antes de expirar?</text>
+<text x="412" y="148" font-family="${MONO}" font-size="10.5" fill="${t.slate}">QUANDO alguém quer desativar um link ativo, ENTÃO:</text>
+${option(182, true, "A · recomendada", "quem criou o link", "é quem sabe para quem mandou")}
+${option(228, false, "B", "qualquer editor do projeto", "resolve quando quem criou não está por perto")}
+${radio(420, 270, false)}<text x="436" y="274" font-family="${BODY}" font-size="13" font-weight="600" fill="${t.graphite}">Outra</text><rect x="484" y="258" width="300" height="26" rx="3" fill="none" stroke="${t.vein}"/><text x="494" y="275" font-family="${BODY}" font-size="12" fill="${t.slate}">a sua resposta</text>
+<path d="M 412 306 h 490" stroke="${t.vein}"/>
+<text x="412" y="326" font-family="${MONO}" font-size="11" font-weight="600" fill="${t.warn}">⚠ se a recomendada contrariar o pedido, o aviso cita o trecho dele</text>
+<text x="412" y="341" font-family="${MONO}" font-size="9.5" fill="${t.slate}">e o Basecamp confere que o trecho está mesmo no pedido</text>
+<rect x="394" y="362" width="526" height="68" rx="6" fill="${t.minerals.fluorite.bg}"/>
+<text x="412" y="384" font-family="${MONO}" font-size="10.5" font-weight="600" fill="${t.minerals.fluorite.fg}">LINE ASSINADA · SÓ O QUE FOI DECIDIDO, COMO CENÁRIO</text>
+<text x="412" y="404" font-family="${MONO}" font-size="11.5" fill="${t.minerals.fluorite.fg}">- D1 · QUANDO alguém quer desativar um link ativo</text>
+<text x="412" y="420" font-family="${MONO}" font-size="11.5" fill="${t.minerals.fluorite.fg}">  ENTÃO quem criou o link (recomendada)</text>
+<path d="M 372 396 h 18" stroke="${t.slate}" stroke-width="1.6" marker-end="url(#arrow)"/>`,
+  );
+}
+
+/** Orchestrated and solo side by side: separate agents keep a secret, one agent keeps a lock. */
+function solo(t: Tokens): string {
+  const step = (x: number, y: number, w: number, title: string, note: string, color: string, fill = t.granite) =>
+    `<rect x="${x}" y="${y}" width="${w}" height="62" rx="6" fill="${fill}" stroke="${t.vein}"/>
+<text x="${x + 12}" y="${y + 26}" font-family="${DISPLAY}" font-size="15" font-weight="800" fill="${color}">${esc(title)}</text>
+<text x="${x + 12}" y="${y + 46}" font-family="${BODY}" font-size="11.5" fill="${t.slate}">${esc(note)}</text>`;
+  const to = (x1: number, y1: number, x2: number, y2: number) =>
+    `<path d="M ${x1} ${y1} L ${x2} ${y2}" stroke="${t.slate}" stroke-width="1.6" marker-end="url(#arrow)"/>`;
+  const q = t.minerals.quartz.main;
+  return svg(
+    960,
+    430,
+    "Com subagentes, cada papel num agente e o seal escondido de quem implementa; solo, um agente só, com os testes primeiro, visíveis e travados pelo Basecamp",
+    t,
+    `${ARROW(t)}${heading(t, "Com vários agentes ou com um só", "o agente escolhe no começo: mohs climb, ou mohs climb --solo quando não pode criar subagentes")}
+<text x="40" y="112" font-family="${MONO}" font-size="11" font-weight="600" fill="${t.graphite}">COM SUBAGENTES · Claude Code</text>
+${step(40, 124, 170, "Planejador", "plano, line e bolts", t.graphite)}
+${step(250, 104, 170, "Belayer", "seal escondido", q)}
+${step(250, 176, 170, "Climber", "sobe ao mesmo tempo", t.rope, t.chalk)}
+${step(460, 124, 170, "Send", "roda o seal", t.graphite)}
+${step(670, 124, 250, "Inspector", "outro agente, que não escreveu o código", t.graphite)}
+${to(210, 150, 246, 138)}${to(210, 160, 246, 204)}${to(420, 136, 456, 148)}${to(420, 206, 456, 170)}${to(630, 155, 666, 155)}
+<rect x="236" y="96" width="198" height="150" rx="8" fill="none" stroke="${q}" stroke-dasharray="4 4"/>
+<text x="246" y="262" font-family="${MONO}" font-size="10" fill="${q}">em paralelo · o climber nunca vê o seal</text>
+<path d="M 40 290 h 880" stroke="${t.vein}"/>
+<text x="40" y="318" font-family="${MONO}" font-size="11" font-weight="600" fill="${t.graphite}">SOLO · um agente, como num chat do Copilot</text>
+${step(40, 330, 170, "Plano + line", "numa tarefa só, sem bolts", t.graphite)}
+${step(250, 330, 170, "Testes primeiro", "visíveis e travados", t.minerals.fluorite.main)}
+${step(460, 330, 170, "Código", "lê os testes travados", t.rope, t.chalk)}
+${step(670, 330, 250, "Send e inspeção", "roda a cópia do Basecamp e se revisa", t.graphite)}
+${to(210, 361, 246, 361)}${to(420, 361, 456, 361)}${to(630, 361, 666, 361)}
+<text x="250" y="414" font-family="${MONO}" font-size="10" fill="${t.minerals.fluorite.main}">um segredo que o próprio autor conhece não prova nada: no solo o teste é trava, não segredo</text>`,
+  );
+}
+
+/** What proved a delivery, as a ruler: the kinds of proof that ran decide the grade shown at every summit. */
+function evidence(t: Tokens): string {
+  const grades: { name: string; color: string; rows: string[] }[] = [
+    { name: "nenhuma", color: t.crit, rows: ["nada rodou além", "do commit"] },
+    { name: "fraca", color: t.warn, rows: ["só checagens sem teste:", "build, lint, typecheck"] },
+    { name: "média", color: t.minerals.diamond.main, rows: ["um tipo de prova: testes", "do projeto, seal ou repro"] },
+    {
+      name: "forte",
+      color: t.minerals.fluorite.main,
+      rows: ["dois tipos: seal, testes", "travados ou repro, mais os", "testes do projeto"],
+    },
+  ];
+  const width = 213;
+  const body = grades
+    .map((grade, i) => {
+      const x = 40 + i * (width + 9);
+      return `<rect x="${x}" y="100" width="${width}" height="14" rx="3" fill="${grade.color}" opacity="${0.35 + i * 0.2}"/>
+<text x="${x}" y="146" font-family="${DISPLAY}" font-size="22" font-weight="800" fill="${grade.color}">${grade.name}</text>
+${lines(x, 172, grade.rows, 12.5, t.slate, BODY, 18)}`;
+    })
+    .join("\n");
+  return svg(
+    960,
+    250,
+    "A régua de evidência de cada summit: nenhuma, fraca (só checagens sem teste), média (um tipo de prova) e forte (dois tipos de prova)",
+    t,
+    `${heading(t, "Todo summit diz o que o provou", "o agente nunca diz que passou: o Basecamp roda e conta · evidência fraca pede que você revise o diff")}
+${body}`,
+  );
+}
+
+/** How we measure the harness: one request, isolated arms, the same hidden suite, a blind review, real issues. */
+function validation(t: Tokens): string {
+  const arms = ["direto", "placebo", "mohs-fix", "mohs", "mohs-solo"];
+  const chips = arms
+    .map((arm, i) => {
+      const y = 116 + i * 40;
+      const color = arm.startsWith("mohs") ? t.rope : t.graphite;
+      return `<rect x="300" y="${y}" width="160" height="30" rx="15" fill="${t.chalk}" stroke="${color}"/>
+<text x="380" y="${y + 20}" text-anchor="middle" font-family="${MONO}" font-size="12" font-weight="600" fill="${color}">${arm}</text>
+<path d="M 250 216 C 274 216, 272 ${y + 15}, 296 ${y + 15}" fill="none" stroke="${t.slate}" stroke-width="1.2"/>
+<path d="M 464 ${y + 15} C 490 ${y + 15}, 496 216, 520 216" fill="none" stroke="${t.slate}" stroke-width="1.2"/>`;
+    })
+    .join("\n");
+  return svg(
+    960,
+    420,
+    "Como medimos o harness: o mesmo pedido para cinco braços isolados, a mesma suíte escondida, custo, revisão cega, e um gym de issues reais",
+    t,
+    `${ARROW(t)}${heading(t, "Como medimos se o harness ajuda", "npm run validate · um subagente por braço, cada um numa pasta isolada, todos com o mesmo modelo")}
+<rect x="40" y="170" width="210" height="92" rx="6" fill="${t.granite}"/>
+<text x="56" y="198" font-family="${DISPLAY}" font-size="17" font-weight="800" fill="${t.graphite}">Pedido padronizado</text>
+${lines(56, 222, ["e uma suíte escondida,", "aprovada antes de rodar"], 12, t.slate, BODY, 17)}
+${chips}
+<rect x="524" y="146" width="396" height="140" rx="6" fill="${t.granite}"/>
+<text x="540" y="174" font-family="${DISPLAY}" font-size="17" font-weight="800" fill="${t.graphite}">Mesma régua para todos</text>
+${lines(540, 200, ["suíte escondida · testes do projeto · tamanho do diff", "tokens e tempo, subagentes incluídos (das transcrições)", "espera humana · trilha · evidência", "revisão cega: entregas anônimas, rubrica fixa"], 12, t.slate, BODY, 19)}
+<rect x="40" y="330" width="880" height="64" rx="6" fill="${t.minerals.diamond.bg}"/>
+<text x="58" y="356" font-family="${MONO}" font-size="11" font-weight="600" fill="${t.minerals.diamond.fg}">GYM DE ISSUES REAIS · validate issue</text>
+<text x="58" y="378" font-family="${BODY}" font-size="12.5" fill="${t.minerals.diamond.fg}">base = o commit de antes da correção · suíte escondida = os testes da correção · só entra se falha na base e passa na referência</text>`,
+  );
+}
+
+const IMAGES: Record<string, (t: Tokens) => string> = { hero, flow, tracks, seal, intents, decisions, solo, evidence, validation };
 
 for (const [name, draw] of Object.entries(IMAGES)) {
   writeFileSync(`${HERE}${name}-light.svg`, draw(LIGHT));
