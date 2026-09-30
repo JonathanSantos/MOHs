@@ -80,11 +80,29 @@ describe("local runner", () => {
     await runner.finish(ROUTE);
   });
 
+  it("commits when node_modules in the worktree is a real, ignored folder (a junction on Windows)", async () => {
+    const root = gitProject({ "src/a.ts": "\n", ".gitignore": "node_modules/\n" });
+    const runner = new LocalRunner({ config: load(root), climbId: "c5", worktreesDir: tempProject() });
+    const workspace = await runner.prepare(ROUTE);
+    // Uma pasta de verdade no lugar do link: é como o git vê a junction do Windows.
+    mkdirSync(join(workspace.path, "node_modules", "lib"), { recursive: true });
+    writeFileSync(join(workspace.path, "node_modules", "lib", "index.js"), "module.exports = 1;\n");
+    writeFileSync(join(workspace.path, "src/a.ts"), "export {};\n");
+    const anchored = await runner.anchor(ROUTE, 1, 1, []);
+    assert.deepEqual(anchored.files, ["src/a.ts"]);
+    await runner.finish(ROUTE);
+  });
+
   it("uses a private repository in .mohs/git when the project has no git", async () => {
     const root = tempProject({ "src/greet.ts": "a\n" });
     const runner = new LocalRunner({ config: load(root), climbId: "c3", worktreesDir: tempProject() });
     const workspace = await runner.prepare(ROUTE);
     assert.ok(existsSync(join(root, ".mohs", "git")));
+    assert.equal(
+      git(root, "--git-dir", join(".mohs", "git"), "config", "core.autocrlf"),
+      "false",
+      "the MOHs' own repository never converts line endings",
+    );
     assert.equal(readFileSync(join(workspace.path, "src/greet.ts"), "utf8"), "a\n");
     writeFileSync(join(workspace.path, "src/greet.ts"), "b\n");
     assert.equal((await runner.anchor(ROUTE, 1, 1, [PASS])).ok, true);

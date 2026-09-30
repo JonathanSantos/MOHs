@@ -20,8 +20,10 @@ export interface Commit {
   files: string[];
 }
 
-/** Everything but the work itself: dependencies are linked, never committed. */
-const STAGE_PATHSPEC = ["--", ".", ":(exclude)node_modules", ":(exclude,glob)**/node_modules", ":(exclude,glob)**/.mohs/**"];
+// Tudo menos as dependências, que são linkadas e nunca commitadas. Só excludes com glob: um exclude literal que nomeia
+// um caminho ignorado (no Windows o node_modules linkado é uma junction, uma pasta que o git ignora) faz o git add
+// falhar. Um glob pega o link; o outro, o conteúdo de uma pasta de verdade.
+const STAGE_PATHSPEC = ["--", ".", ":(exclude,glob)**/node_modules", ":(exclude,glob)**/node_modules/**", ":(exclude,glob)**/.mohs/**"];
 
 /**
  * One git worktree per route, outside the project so the project's own tools never scan it.
@@ -184,6 +186,9 @@ async function privateRepository(projectRoot: string, mohsDir: string): Promise<
     await git.run(["init", "-q"]);
     writeText(join(gitDir, "info", "exclude"), ".mohs/\nnode_modules/\n**/node_modules/\n");
   }
+  // O repositório é do MOHs, não do projeto: os arquivos voltam byte a byte, sem conversão de fim de linha (no Windows,
+  // core.autocrlf=true trocaria LF por CRLF nos worktrees). Vale também para repositórios criados antes disto.
+  await git.run(["config", "core.autocrlf", "false"]);
   // Fotografa o estado atual do projeto: é dele que as routes partem.
   await git.run(["add", "-A"]);
   if ((await git.tryRun(["diff", "--cached", "--quiet"])) === null) await git.commit("mohs: snapshot do projeto");

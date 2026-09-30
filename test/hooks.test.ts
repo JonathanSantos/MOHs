@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
 import { mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 import { describe, it } from "node:test";
 import { CLI_ENTRY } from "../src/cli/invocation.ts";
 import { readHookInput, type ToolUse } from "../src/hooks/input.ts";
@@ -87,12 +87,13 @@ describe("hook policy", () => {
 describe("hook input", () => {
   it("reads Claude Code and Copilot payloads into one shape", () => {
     const claude = readHookInput({ cwd: "/p", tool_name: "Edit", tool_input: { file_path: "src/a.ts" } }, "/x");
-    assert.deepEqual(claude.tool, { name: "Edit", kind: "write", paths: ["/p/src/a.ts"], command: undefined });
+    // Os caminhos saem absolutos no formato da plataforma: no Windows, /p/src/a.ts vira D:\\p\\src\\a.ts.
+    assert.deepEqual(claude.tool, { name: "Edit", kind: "write", paths: [resolve("/p/src/a.ts")], command: undefined });
     const copilot = readHookInput({ cwd: "/p", toolName: "view", toolArgs: '{"path":"/p/.env"}' }, "/x");
-    assert.deepEqual(copilot.tool?.paths, ["/p/.env"]);
+    assert.deepEqual(copilot.tool?.paths, [resolve("/p/.env")]);
     assert.equal(copilot.tool?.kind, "read");
     const patch = readHookInput({ cwd: "/p", toolName: "apply_patch", toolArgs: { input: "*** Update File: src/b.ts\n@@" } }, "/x");
-    assert.deepEqual(patch.tool?.paths, ["/p/src/b.ts"]);
+    assert.deepEqual(patch.tool?.paths, [resolve("/p/src/b.ts")]);
     assert.equal(readHookInput({ cwd: "/p", tool_name: "WebSearch", tool_input: {} }, "/x").tool?.kind, "other");
   });
 });

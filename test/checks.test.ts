@@ -2,13 +2,13 @@ import assert from "node:assert/strict";
 import { writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
-import { fileURLToPath } from "node:url";
 import { readEvents } from "../src/basecamp/event-log.ts";
 import { agentClimb, mohs, useMohsBin, workDir } from "./agent-helpers.ts";
 import { gitProject } from "./git-helpers.ts";
 import { tempProject } from "./helpers.ts";
 
-const MOHS_API = fileURLToPath(new URL("../src/index.ts", import.meta.url));
+// Uma URL file:// e não um caminho: no Windows, um import de "D:\…" não é aceito pelo carregador ESM.
+const MOHS_API = new URL("../src/index.ts", import.meta.url).href;
 const ANCHOR = 'node -e "process.exit(0)"';
 
 const PLAN = {

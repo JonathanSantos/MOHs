@@ -11,6 +11,8 @@ export function gitProject(files: Record<string, string>): string {
   git(root, "init", "-q", "-b", "main");
   git(root, "config", "user.email", "test@mohs.dev");
   git(root, "config", "user.name", "MOHs test");
+  // Os runners Windows usam core.autocrlf=true: sem isto, os worktrees sairiam com CRLF e as comparações falhariam.
+  git(root, "config", "core.autocrlf", "false");
   git(root, "add", "-A");
   git(root, "commit", "-q", "-m", "inicial");
   return root;
