@@ -1,0 +1,15 @@
+{
+  "id": "react-31119",
+  "keywords": ["react", "callback", "as"],
+  "repo": "https://github.com/react/react.git",
+  "base": "eaf2d5c67^",
+  "reference": "eaf2d5c67",
+  "intent": "fix",
+  "request": "No repositório do React, corrija a regra react-hooks/exhaustive-deps (packages/eslint-plugin-react-hooks) quando o callback passado a um hook é um identificador com asserção de tipo do TypeScript. Exemplo:\n\nfunction useCustomCallback(callback, deps) {\n  return useCallback(callback as any, deps)\n}\n\nSem o as any, a regra já avisa: React Hook useCallback received a function whose dependencies are unknown. Pass an inline function instead. Com o as any, ela precisa dar o mesmo aviso. Acrescente testes em packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js. Os testes do plugin rodam com: node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "hidden": {
+    "command": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js",
+    "files": ["packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js"]
+  },
+  "projectTest": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "source": ["https://github.com/react/react/pull/31119"]
+}

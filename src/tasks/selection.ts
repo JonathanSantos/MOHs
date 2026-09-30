@@ -9,6 +9,8 @@ export interface Seeker {
   as?: string;
   /** Roles this agent (`as`) already took in this climb. */
   took?: readonly Role[];
+  /** A solo climb: one agent plays every role, so nothing is sealed from it and no role keeps it away from another. */
+  solo?: boolean;
 }
 
 /** Tasks of these roles show only to whoever asks for the role by name: the belayer's tests must stay sealed. */
@@ -19,16 +21,18 @@ const APART: readonly (readonly [Role, Role])[] = [["belayer", "climber"]];
 
 /**
  * Narrows an open situation to what this agent should do. Tasks outside its role or route are only named (handoff);
- * tasks another agent holds are reported as held, so two agents never work on the same one. Without a role, a single
- * free task shows in full; several open tasks, one another agent holds or a sealed one become a board instead.
+ * tasks another agent holds are reported as held, so two agents never work on the same one. A single free task shows
+ * in full. Several free tasks become a board, even for one role (two inspectors pick theirs by `--task`, instead of
+ * whichever comes first); so do, without a role, a task another agent holds or a sealed one.
  */
 export function forAgent(situation: Situation, seeker: Seeker): Situation {
   if (situation.kind !== "task") return situation;
   const open = [situation.task, ...situation.others];
+  const took = seeker.solo ? [] : (seeker.took ?? []);
   const wanted = open.filter((task) => (!seeker.role || task.role === seeker.role) && (!seeker.route || task.route === seeker.route));
-  const matching = wanted.filter((task) => !apartFrom(task.role, seeker.took ?? []));
+  const matching = wanted.filter((task) => !apartFrom(task.role, took));
   if (!matching.length) {
-    if (wanted.length) return { kind: "apart", tasks: wanted.map(brief), took: apartFrom(wanted[0].role, seeker.took ?? [])! };
+    if (wanted.length) return { kind: "apart", tasks: wanted.map(brief), took: apartFrom(wanted[0].role, took)! };
     return { kind: "handoff", tasks: open.map(brief) };
   }
   const free = seeker.as ? matching.filter((task) => !task.claimedBy || task.claimedBy === seeker.as) : matching;
@@ -37,8 +41,8 @@ export function forAgent(situation: Situation, seeker: Seeker): Situation {
   const [first] = mineFirst;
   const own = seeker.as !== undefined && first.claimedBy === seeker.as;
   const heldElsewhere = first.claimedBy !== undefined && !own;
-  if (!seeker.role && !own && (free.length > 1 || heldElsewhere || SEALED_ROLES.has(first.role)))
-    return { kind: "board", tasks: matching.map(brief) };
+  const sealed = !seeker.solo && SEALED_ROLES.has(first.role);
+  if (!own && (free.length > 1 || (!seeker.role && (heldElsewhere || sealed)))) return { kind: "board", tasks: matching.map(brief) };
   return { kind: "task", task: first, others: mineFirst.slice(1) };
 }
 

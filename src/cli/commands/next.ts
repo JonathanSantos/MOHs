@@ -1,4 +1,5 @@
 import { isRole, ROLES } from "../../domain/types.ts";
+import { isSoloClimb } from "../../basecamp/resume.ts";
 import { claimTask, readTask, rolesTakenBy } from "../../tasks/file-board.ts";
 import { apartFrom, forAgent } from "../../tasks/selection.ts";
 import { waitForSituation } from "../../tasks/situation.ts";
@@ -28,7 +29,8 @@ export const nextCommand = defineCommand({
     if (typeof timeout === "string") return fail(timeout);
     if (flags.role && !isRole(flags.role)) return fail(`papel desconhecido: ${flags.role}. Papéis: ${ROLES.join(", ")}`);
     const options = { projectRoot, json: flags.json, as: flags.as, full: flags.full, climbDir: dir };
-    const took = flags.as ? rolesTakenBy(dir, flags.as) : [];
+    const solo = isSoloClimb(dir);
+    const took = flags.as && !solo ? rolesTakenBy(dir, flags.as) : [];
 
     if (flags.task) {
       const task = readTask(dir, flags.task);
@@ -42,7 +44,7 @@ export const nextCommand = defineCommand({
     }
 
     const role = isRole(flags.role) ? flags.role : undefined;
-    const situation = forAgent(await waitForSituation(dir, timeout), { role, route: flags.route, as: flags.as, took });
+    const situation = forAgent(await waitForSituation(dir, timeout), { role, route: flags.route, as: flags.as, took, solo });
     if (situation.kind === "handoff" && (flags.role || flags.route))
       print(
         `Nenhuma tarefa aberta para ${[flags.role, flags.route && `route ${flags.route}`].filter(Boolean).join(" na ")}. Pare aqui e avise quem orquestra.`,

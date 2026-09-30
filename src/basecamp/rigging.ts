@@ -33,18 +33,35 @@ export async function signBolts(session: ClimbSession, route: PlannedRoute): Pro
   });
 }
 
+/** How a seal written alongside the climb lines up with it: both tasks show up together, the belayer's first. */
+export interface SealTiming {
+  /** The belayer's first task opens only after this (the climber's workspace), so the climber's follows at once. */
+  after?: Promise<unknown>;
+  /** Called once the belayer has its task. */
+  belaying?: () => void;
+}
+
 /**
  * The hidden tests of one route. A sealed test that already passes proves nothing, so every test must fail on the
  * current code. The belayer writes them in a throwaway checkout and gets a second chance; after that a human decides.
  */
-export async function sealRoute(session: ClimbSession, route: PlannedRoute): Promise<void> {
+export async function sealRoute(session: ClimbSession, route: PlannedRoute, timing: SealTiming = {}): Promise<void> {
   const { crew, runner, journal, gate } = session;
   journal.record("seal.started", {}, { actor: "belayer", route: route.id });
   let feedback: string | undefined;
   for (let attempt = 1; ; attempt++) {
-    const workspace = await runner.prepareSeal(route);
-    const context = { notes: session.notes(route.id), workspace, attempt, feedback, observer: session.observerFor({ route: route.id }) };
-    const seal = await climbLevelWork(session, "belayer", () => crew.seal(route, context));
+    const [workspace] = await Promise.all([runner.prepareSeal(route), attempt === 1 ? timing.after : undefined]);
+    const context = {
+      notes: session.notes(route.id),
+      workspace,
+      attempt,
+      feedback,
+      solo: session.solo,
+      observer: session.observerFor({ route: route.id }),
+    };
+    const writing = climbLevelWork(session, "belayer", () => crew.seal(route, context));
+    if (attempt === 1) timing.belaying?.();
+    const seal = await writing;
     session.sealed.set(route.id, seal);
     session.sealedCode.set(route.id, sealedCode(seal));
     journal.record(

@@ -1,0 +1,15 @@
+{
+  "id": "react-27045",
+  "keywords": ["react", "hooks", "async"],
+  "repo": "https://github.com/react/react.git",
+  "base": "7118f5dd7^",
+  "reference": "7118f5dd7",
+  "intent": "feature",
+  "request": "No repositório do React, faça a regra react-hooks/rules-of-hooks (packages/eslint-plugin-react-hooks) acusar hooks chamados dentro de uma função async, seja um componente ou um hook. Hooks não podem rodar em funções async, no cliente nem no servidor. A mensagem é: React Hook \"useState\" cannot be called in an async function. Exemplo que passa a dar esse erro:\n\nasync function AsyncComponent() {\n  useState();\n}\n\nAcrescente testes em packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js. Os testes do plugin rodam com: node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "hidden": {
+    "command": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js",
+    "files": ["packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js"]
+  },
+  "projectTest": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "source": ["https://github.com/react/react/pull/27045"]
+}

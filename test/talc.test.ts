@@ -1,8 +1,9 @@
 import assert from "node:assert/strict";
 import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
-import { dirname, join } from "node:path";
+import { basename, dirname, join } from "node:path";
 import { describe, it } from "node:test";
 import { readEvents } from "../src/basecamp/event-log.ts";
+import { resolveClimbDir } from "../src/cli/climb-dir.ts";
 import { agentClimb, mohs, useMohsBin, workDir } from "./agent-helpers.ts";
 import { git, gitProject } from "./git-helpers.ts";
 
@@ -71,7 +72,8 @@ describe("talc: a small fix without plan or line", () => {
     assert.equal(view.state, "escalated");
     assert.match(view.escalation ?? "", /traduções/);
 
-    const next = "20260930-0203-full";
+    // No mesmo minuto da correção, e antes dela na ordem dos ids: o padrão sem --climb tem de ser o que começou por último.
+    const next = "20260930-0201-full";
     const full = await mohs(
       root,
       "climb",
@@ -93,6 +95,7 @@ describe("talc: a small fix without plan or line", () => {
     const started = readEvents(join(root, ".mohs", "climbs", next, "events.jsonl")).find((event) => event.type === "climb.started");
     const request = started?.type === "climb.started" ? started.data.request : "";
     assert.match(request, /^Trocar a saudação para oi\n\n\(Veio da correção 20260930-0201-talc, que pediu o fluxo completo: .*traduções/);
+    assert.equal(basename(resolveClimbDir(root) ?? ""), next);
   });
 
   it("escalates by itself when the fix touches sensitive code, whatever the climber thought", async (t) => {
@@ -108,5 +111,24 @@ describe("talc: a small fix without plan or line", () => {
     assert.equal(view.state, "escalated");
     const escalated = readEvents(join(root, ".mohs", "climbs", id, "events.jsonl")).find((event) => event.type === "climb.escalated");
     assert.equal(escalated?.actor, "basecamp");
+  });
+
+  it("counts only code toward the talc bounds: tests and documentation keep a fix small", async (t) => {
+    const root = project();
+    const id = "20260930-0203-talc";
+    const running = agentClimb(root, t, id, REQUEST, "talc").run();
+    const climber = await mohs(root, "next");
+    const work = workDir(climber.out);
+    assert.match(climber.out, /mais de 3 arquivos de código \(testes e documentação não contam\)/);
+    write(work, "src/greet.js", 'export const greet = () => "oi";\n');
+    write(work, "src/farewell.js", 'export const farewell = () => "tchau";\n');
+    write(work, "src/index.js", 'export * from "./greet.js";\nexport * from "./farewell.js";\n');
+    write(work, "test/farewell.test.js", 'import test from "node:test";\ntest("existe", () => {});\n');
+    write(work, "README.md", "# Saudação\n\nAgora diz oi.\n");
+    write(work, "docs/saudacao.md", "Como a saudação funciona.\n");
+    const out = await mohs(root, "call", "safe", "saudação, despedida e índice, com teste e documentação");
+    assert.match(out.out, /A correção e as decisões do climber espera a assinatura humana/, "six files, three of them code: still talc");
+    await mohs(root, "sign", "summit-A");
+    assert.equal((await running).state, "done");
   });
 });

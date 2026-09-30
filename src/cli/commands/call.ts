@@ -1,11 +1,12 @@
 import { readFileSync } from "node:fs";
+import { isSoloClimb } from "../../basecamp/resume.ts";
 import { join, resolve } from "node:path";
 import { EVENTS_FILE, readEvents } from "../../basecamp/event-log.ts";
 import type { EventType, MohsEvent } from "../../domain/events.ts";
 import { ANSWERS, isAnswerName, parseAnswer, summarizeAnswer, type AnswerName } from "../../tasks/answers.ts";
 import { claimTask, openTasks, readTask, rolesTakenBy, submitAnswer, type TaskRecord } from "../../tasks/file-board.ts";
 import { apartFrom, forAgent } from "../../tasks/selection.ts";
-import { summarizeSituation, waitForPickup, waitForSituation } from "../../tasks/situation.ts";
+import { summarizeSituation, waitForNextStep, waitForPickup, waitForSituation } from "../../tasks/situation.ts";
 import { CLIMB_FLAG, NO_CLIMB, resolveClimbDir, WAIT_FLAG, waitMs } from "../climb-dir.ts";
 import { project } from "../../view/reducer.ts";
 import { defineCommand } from "../command.ts";
@@ -55,6 +56,7 @@ export const callCommand = defineCommand({
 
     const started = Date.now();
     const seenSeq = readEvents(join(dir, EVENTS_FILE)).at(-1)?.seq ?? 0;
+    const openBefore = new Set(openTasks(dir).map((open) => open.id));
     submitAnswer(dir, task.id, parsed.answer);
     const pickup = await waitForPickup(dir, task.id, timeout);
     if (pickup.kind === "stopped") return fail("o processo do Basecamp deste climb não está rodando; a resposta ficou guardada");
@@ -64,10 +66,12 @@ export const callCommand = defineCommand({
       return 0;
     }
 
-    // A próxima tarefa só aparece se for do mesmo papel e da mesma route; qualquer outra é só nomeada.
-    const next = await waitForSituation(dir, Math.max(0, timeout - (Date.now() - started)));
-    const took = flags.as ? rolesTakenBy(dir, flags.as) : [];
-    const situation = forAgent(next, { role: task.role, route: task.route, as: flags.as, took });
+    // A próxima tarefa só aparece se for do mesmo papel e da mesma route; qualquer outra é só nomeada. Solo, o mesmo
+    // agente faz todos os papéis: a próxima aparece, seja de quem for.
+    const next = await waitForNextStep(dir, task, openBefore, Math.max(0, timeout - (Date.now() - started)));
+    const solo = isSoloClimb(dir);
+    const took = flags.as && !solo ? rolesTakenBy(dir, flags.as) : [];
+    const situation = forAgent(next, solo ? { as: flags.as, solo } : { role: task.role, route: task.route, as: flags.as, took });
     if (situation.kind === "task" && flags.as) claimTask(dir, situation.task.id, flags.as);
     if (!flags.json) print(`${ink.ok("✓")} ${task.id} · ${name} · ${summarizeAnswer(parsed.answer)}`, ...whatHappened(dir, seenSeq), "");
     return reportSituation(situation, { projectRoot, json: flags.json, as: flags.as, climbDir: dir });
@@ -82,6 +86,9 @@ const AGENT_EVENTS: ReadonlySet<EventType> = new Set([
   "send.clean",
   "send.fall",
   "route.abandoned",
+  "repro.red",
+  "repro.verified",
+  "repro.adopted",
 ]);
 
 function whatHappened(climbDir: string, afterSeq: number): string[] {
@@ -124,7 +131,7 @@ async function pickTask(climbDir: string, id: string | undefined, as: string | u
   }
   if (as && task.claimedBy && task.claimedBy !== as)
     return `a tarefa ${task.id} está com ${task.claimedBy}; pegue a sua com mohs next --as ${as}`;
-  const apart = as ? apartFrom(task.role, rolesTakenBy(climbDir, as)) : undefined;
+  const apart = as && !isSoloClimb(climbDir) ? apartFrom(task.role, rolesTakenBy(climbDir, as)) : undefined;
   if (apart) return `${as} já fez tarefa de ${apart} neste climb; a tarefa ${task.id} (${task.role}) precisa de outro agente`;
   if (as) claimTask(climbDir, task.id, as);
   return task;

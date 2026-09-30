@@ -44,7 +44,10 @@ export class Basecamp {
     announceBasecamp(this.session.dir);
     const autoSign = desk.autoSigns || undefined;
     if (this.session.resume) journal.record("climb.resumed", { after: this.session.resume.lastSeq }, { actor: "human" });
-    else journal.record("climb.started", { request, project: basename(config.projectRoot), scenario, autoSign }, { actor: "human" });
+    else {
+      const solo = this.session.solo || undefined;
+      journal.record("climb.started", { request, project: basename(config.projectRoot), scenario, autoSign, solo }, { actor: "human" });
+    }
     try {
       const { checks, problems } = await loadChecks(config.checks);
       if (problems.length) throw new ClimbAborted(`corrija os checks do projeto antes do climb: ${problems.join("; ")}`, "basecamp");

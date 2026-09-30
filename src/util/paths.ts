@@ -23,6 +23,13 @@ export function isTestPath(path: string): boolean {
   return TEST_GLOBS.some((glob) => matchGlob(path, glob));
 }
 
+const DOC_GLOBS = ["**/*.{md,mdx,rst,txt,adoc}", "**/{docs,doc}/**"];
+
+/** Documentation: it explains the code but does not change what it does, so the talc bounds leave it out. */
+export function isDocPath(path: string): boolean {
+  return DOC_GLOBS.some((glob) => matchGlob(path, glob));
+}
+
 /** Environment files may hold secrets; survey and tools skip them even when listing or searching. */
 export function isSecretFile(path: string): boolean {
   return /^\.env(\..+)?$/.test(basename(path));

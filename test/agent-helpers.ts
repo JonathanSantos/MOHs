@@ -24,7 +24,14 @@ export async function mohs(root: string, ...args: string[]): Promise<{ code: num
 }
 
 /** The Basecamp in this process, with the file board the CLI talks to. It stops waiting when the test ends. */
-export function agentClimb(root: string, t: TestContext, climbId: string, request = "Trocar a saudação para oi", hardness?: Hardness) {
+export function agentClimb(
+  root: string,
+  t: TestContext,
+  climbId: string,
+  request = "Trocar a saudação para oi",
+  hardness?: Hardness,
+  { solo }: { solo?: boolean } = {},
+) {
   const config = load(root);
   const stop = new AbortController();
   t.after(() => stop.abort());
@@ -37,6 +44,7 @@ export function agentClimb(root: string, t: TestContext, climbId: string, reques
     desk: new FileDesk(options),
     request,
     hardness,
+    solo,
   });
 }
 

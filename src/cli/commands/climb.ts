@@ -58,6 +58,10 @@ export const climbCommand = defineCommand({
       description: "retoma um climb cujo Basecamp parou, do ponto em que o log diz que ele estava",
     },
     mode: { type: "string", placeholder: "modo", description: "climb (padrão) ou croqui (use mohs croqui)" },
+    solo: {
+      type: "boolean",
+      description: "um agente faz todos os papéis (sem subagentes): os testes vêm primeiro, visíveis e travados, no lugar do seal",
+    },
     "auto-sign": { type: "boolean", description: "assina a line automaticamente" },
     "auto-rescue": { type: "string", placeholder: "opção", description: `responde todo rescue com a opção (${RESCUE_OPTIONS.join(", ")})` },
     "no-lookout": { type: "boolean", description: "não sobe o Lookout junto" },
@@ -122,6 +126,7 @@ export const climbCommand = defineCommand({
       scenario: setup.scenario,
       hardness,
       resume,
+      solo: flags.solo,
       stages: STAGE_SETS[flags.mode ?? "climb"],
     });
 

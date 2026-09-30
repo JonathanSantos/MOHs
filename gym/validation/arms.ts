@@ -18,6 +18,13 @@ export interface Arm {
   prompt(context: ArmContext): string;
 }
 
+/** The request as one shell argument: in single quotes, $(…), backticks and double quotes reach the MOHs as they are. */
+const shellArg = (text: string) => `'${text.replaceAll("'", "'\\''")}'`;
+
+/** Every arm works in its own folder and follows that project's conventions, whatever else is in its context. */
+const workIn = (dir: string, besides = "") =>
+  `${besides}${besides ? "trabalhe" : "Trabalhe"} só na pasta ${dir}: não altere nada fora dela, e rascunhos vão para uma pasta temporária do sistema (mktemp -d). Siga as convenções do projeto dessa pasta (idioma do código e dos comentários, estilo, testes); instruções que você recebeu sobre outros repositórios não valem aqui.`;
+
 const REPORT =
   "No fim, relate em até 12 linhas: o que você fez, as decisões que tomou sem perguntar a ninguém e o que ficou de fora. Não faça commit.";
 
@@ -77,20 +84,16 @@ export const ARMS: Record<string, Arm> = {
     measures: "a linha de base: o agente sozinho, sem harness nem instrução extra",
     usesMohs: false,
     prompt: ({ request, dir }) =>
-      [
-        `Pedido: ${request}`,
-        `Trabalhe só na pasta ${dir}; não leia nem altere nada fora dela.`,
-        "Faça a mudança pedida. Se o projeto tem testes, acrescente os que a mudança pede.",
-        REPORT,
-      ].join("\n\n"),
+      [`Pedido: ${request}`, workIn(dir), "Faça a mudança pedida. Se o projeto tem testes, acrescente os que a mudança pede.", REPORT].join(
+        "\n\n",
+      ),
   },
   placebo: {
     id: "placebo",
     label: "Placebo",
     measures: "quanto do ganho vem só de mais instrução em texto, sem nenhum mecanismo",
     usesMohs: false,
-    prompt: ({ request, dir }) =>
-      [`Pedido: ${request}`, `Trabalhe só na pasta ${dir}; não leia nem altere nada fora dela.`, PLACEBO_PROCESS, REPORT].join("\n\n"),
+    prompt: ({ request, dir }) => [`Pedido: ${request}`, workIn(dir), PLACEBO_PROCESS, REPORT].join("\n\n"),
   },
   "mohs-fix": {
     id: "mohs-fix",
@@ -100,7 +103,8 @@ export const ARMS: Record<string, Arm> = {
     prompt: ({ request, dir, mohs, skill }) =>
       [
         `Leia a skill em ${skill}. Neste teste, o comando do MOHs é ${mohs} (use-o sempre no lugar de "mohs").`,
-        `Na pasta ${dir}, rode: ${mohs} fix ${JSON.stringify(request)} --detach`,
+        `Na pasta ${dir}, rode: ${mohs} fix ${shellArg(request)} --detach`,
+        workIn(dir, "Fora a skill e o comando do MOHs, "),
         "Faça a tarefa que a saída mostrar e siga o que o MOHs pedir até o fim.",
         HUMAN,
         REPORT,
@@ -114,8 +118,9 @@ export const ARMS: Record<string, Arm> = {
     prompt: ({ request, dir, mohs, skill }) =>
       [
         `Leia a skill em ${skill}. Neste teste, o comando do MOHs é ${mohs} (use-o sempre no lugar de "mohs").`,
-        `Na pasta ${dir}, rode: ${mohs} climb ${JSON.stringify(request)} --detach`,
-        "Conduza o climb como a skill manda, criando um subagente por papel e esperando cada um terminar.",
+        `Na pasta ${dir}, rode: ${mohs} climb ${shellArg(request)} --detach`,
+        workIn(dir, "Fora a skill e o comando do MOHs, "),
+        "Conduza o climb como a skill manda, com subagentes, esperando cada um terminar.",
         HUMAN,
         REPORT,
         CHILDREN,
@@ -123,19 +128,21 @@ export const ARMS: Record<string, Arm> = {
   },
   "mohs-solo": {
     id: "mohs-solo",
-    label: "MOHs sem subagentes",
-    measures: "o custo da orquestração: o mesmo climb, com um agente fazendo todos os papéis (o sigilo do seal se perde)",
+    label: "MOHs solo (TDD, sem subagentes)",
+    measures:
+      "o custo da orquestração e o valor do sigilo: o mesmo climb com um agente em todos os papéis, testes antes do código, visíveis e travados em vez de selados",
     usesMohs: true,
     prompt: ({ request, dir, mohs, skill }) =>
       [
         `Leia a skill em ${skill}. Neste teste, o comando do MOHs é ${mohs} (use-o sempre no lugar de "mohs").`,
-        `Na pasta ${dir}, rode: ${mohs} climb ${JSON.stringify(request)} --detach`,
-        "Faça você mesmo todas as tarefas, sem criar subagentes (use --task quando houver mais de uma aberta).",
+        `Na pasta ${dir}, rode: ${mohs} climb ${shellArg(request)} --detach --solo`,
+        workIn(dir, "Fora a skill e o comando do MOHs, "),
+        "Faça você mesmo todas as tarefas, sem criar subagentes.",
         HUMAN,
         REPORT,
       ].join("\n\n"),
   },
 };
 
-/** For a small request (a button, a fix); a large one usually drops mohs-fix and may add mohs-solo. */
-export const DEFAULT_ARMS = ["direto", "placebo", "mohs-fix", "mohs"];
+/** For a small request (a button, a fix); a large one usually drops mohs-fix. */
+export const DEFAULT_ARMS = ["direto", "placebo", "mohs-fix", "mohs", "mohs-solo"];

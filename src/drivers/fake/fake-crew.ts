@@ -43,7 +43,7 @@ export class FakeCrew extends Scripted implements Crew {
 
   async writeLine() {
     await this.wait(COST.line.ms);
-    return { o2: COST.line.o2, text: this.scenario.line };
+    return { o2: COST.line.o2, text: this.scenario.line, decisions: this.scenario.decisions };
   }
 
   async setBolts(route: PlannedRoute) {

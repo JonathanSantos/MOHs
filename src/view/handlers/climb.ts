@@ -9,6 +9,7 @@ export const climbHandlers: HandlerMap = {
     view.project = data.project;
     view.scenario = data.scenario;
     view.autoSign = data.autoSign;
+    view.solo = data.solo;
     view.startedAt = event.ts;
     view.state = "surveying";
   },
@@ -22,6 +23,7 @@ export const climbHandlers: HandlerMap = {
   "scout.hardness": ({ view, data }) => {
     view.kind = data.kind;
     view.hardness = data.hardness;
+    view.intent = data.intent;
     view.reason = data.reason;
     view.o2.budget = data.budget;
     view.routes = data.routes.map((route): RouteView => ({
@@ -63,7 +65,18 @@ export const climbHandlers: HandlerMap = {
     // Um novo rascunho durante a espera pela assinatura volta para lining antes de aguardar de novo.
     if (r.view.state === "awaiting_signature") r.moveClimb("lining");
     r.moveClimb("awaiting_signature");
-    r.view.line = { hash: r.data.hash, text: r.data.text, signed: false, drafts: (r.view.line?.drafts ?? 0) + 1 };
+    r.view.line = {
+      hash: r.data.hash,
+      text: r.data.text,
+      signed: false,
+      drafts: (r.view.line?.drafts ?? 0) + 1,
+      body: r.data.body,
+      decisions: r.data.decisions,
+    };
+  },
+  "line.decided": ({ view, data }) => {
+    if (!view.line) return;
+    Object.assign(view.line, { hash: data.hash, text: data.text, settled: data.decisions });
   },
   "line.signed": ({ view, data }) => {
     if (!view.line) return;

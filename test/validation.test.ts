@@ -7,6 +7,9 @@ import {
   evaluateRun,
   recordDecision,
   recordUsage,
+  roleAgentFiles,
+  testCounts,
+  usageFromTranscripts,
   runName,
   saveHidden,
   saveReport,
@@ -40,7 +43,7 @@ describe("validations (docs/VALIDATION.md)", () => {
     const base = tempProject();
     const info = createRun({
       keywords: ["botao", "contador", "acessivel"],
-      request: "O contador soma 1 a cada clique",
+      request: "O contador soma 1 a cada clique em $(botao), d'água",
       template,
       arms: ["direto", "mohs-fix", `mohs@${head}`],
       base,
@@ -53,7 +56,11 @@ describe("validations (docs/VALIDATION.md)", () => {
     assert.equal(pinned.name, `mohs@${head}`);
     assert.ok(existsSync(join(info.dir, `_mohs@${head}`, "src", "cli.ts")), "an arm can run another version of the MOHs");
     assert.deepEqual(Object.keys(info.mohs).sort(), [head, "working"].sort());
-    assert.match(readFileSync(join(info.dir, "_prompts", "mohs-fix.md"), "utf8"), /fix "O contador soma 1 a cada clique" --detach/);
+    assert.match(
+      readFileSync(join(info.dir, "_prompts", "mohs-fix.md"), "utf8"),
+      /fix 'O contador soma 1 a cada clique em \$\(botao\), d'\\''água' --detach/,
+      "the request goes to the shell in single quotes, $(…) and apostrophes intact",
+    );
     assert.match(
       readFileSync(join(info.dir, "_prompts", `mohs@${head}.md`), "utf8"),
       /cada subagente que você criou/,
@@ -80,5 +87,68 @@ describe("validations (docs/VALIDATION.md)", () => {
     assert.match(html, /<title>Validação botao-contador-acessivel-20260930-1415<\/title>/);
     assert.match(html, /assinei o summit sem editar/);
     assert.match(html, /Fiz next somar 1\./);
+  });
+
+  it("keeps the repository's role agents in sync with the skill (npm run validate -- agents)", () => {
+    for (const { file, content } of roleAgentFiles()) {
+      assert.equal(existsSync(file) ? readFileSync(file, "utf8") : null, content, `${file} desatualizado: rode npm run validate -- agents`);
+    }
+  });
+
+  it("reads an arm's usage, and that of every subagent it created, from the transcripts", () => {
+    const root = tempProject();
+    const dir = join(root, "projeto", "sessao", "subagents");
+    mkdirSync(dir, { recursive: true });
+    const turn = (ts: string, tokens: number, tools = 0) =>
+      JSON.stringify({
+        type: "assistant",
+        timestamp: ts,
+        message: {
+          usage: { input_tokens: 1, cache_read_input_tokens: tokens - 1, cache_creation_input_tokens: 0, output_tokens: 0 },
+          content: Array.from({ length: tools }, () => ({ type: "tool_use" })),
+        },
+      });
+    const prompt = (ts: string) => JSON.stringify({ type: "user", timestamp: ts, message: { content: "faça" } });
+    const agent = (id: string, meta: object, lines: string[]) => {
+      writeFileSync(join(dir, `agent-${id}.jsonl`), `${lines.join("\n")}\n`);
+      writeFileSync(join(dir, `agent-${id}.meta.json`), JSON.stringify(meta));
+    };
+    // O braço roda duas vezes (antes e depois da assinatura): a espera do humano no meio não conta.
+    agent("arm", { agentType: "general-purpose" }, [
+      prompt("2026-09-30T10:00:00Z"),
+      turn("2026-09-30T10:00:10Z", 30_000, 2),
+      prompt("2026-09-30T10:05:00Z"),
+      turn("2026-09-30T10:05:20Z", 40_000, 1),
+    ]);
+    agent("child", { agentType: "mohs-climber", description: "Climber A", parentAgentId: "arm" }, [
+      prompt("2026-09-30T10:05:01Z"),
+      turn("2026-09-30T10:05:15Z", 18_000, 4),
+    ]);
+    agent("grandchild", { agentType: "mohs-inspector", description: "Inspector", parentAgentId: "child" }, [
+      prompt("2026-09-30T10:05:02Z"),
+      turn("2026-09-30T10:05:03Z", 12_000, 1),
+    ]);
+    agent("other", { agentType: "general-purpose" }, [prompt("2026-09-30T10:00:00Z"), turn("2026-09-30T10:00:01Z", 99_000)]);
+
+    const parts = usageFromTranscripts("arm", root);
+    assert.deepEqual(
+      parts.map(({ tokens, tools, ms }) => [tokens, tools, ms]),
+      [
+        [40_000, 3, 30_000],
+        [18_000, 4, 0],
+        [12_000, 1, 0],
+      ],
+    );
+    assert.match(parts[1].note ?? "", /mohs-climber · Climber A \(14000 ms/);
+  });
+
+  it("reads test totals from jest and from node:test", () => {
+    assert.deepEqual(testCounts("Test Suites: 1 failed, 1 total\nTests:       2 failed, 214 passed, 216 total\n"), {
+      pass: 214,
+      fail: 2,
+      total: 216,
+    });
+    assert.deepEqual(testCounts("Tests:       216 passed, 216 total"), { pass: 216, fail: 0, total: 216 });
+    assert.deepEqual(testCounts("ℹ tests 3\nℹ pass 2\nℹ fail 1\n"), { pass: 2, fail: 1, total: 3 });
   });
 });

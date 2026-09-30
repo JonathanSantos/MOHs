@@ -18,9 +18,19 @@ import type {
 import type { PlannedRoute } from "../domain/plan.ts";
 import { surveyRepository, type SurveyResult } from "../survey/survey.ts";
 import { readText } from "../util/fs.ts";
-import { projectSlug, Worktrees, type Workspace } from "../workspace/worktrees.ts";
+import { packagesOf, projectSlug, workspacePackages, Worktrees, type Workspace } from "../workspace/worktrees.ts";
 import { builtInCovers, builtInSealCommand, describeBuiltInSeal } from "./seal-runners.ts";
 import { runShell } from "./shell.ts";
+
+/**
+ * In a check command, the monorepo packages the change touched: `{packages}` as paths (npm test -- {packages}),
+ * `{filters}` as `--filter=./path` (pnpm and turbo).
+ */
+const SCOPES: Record<string, (packages: readonly string[]) => string> = {
+  "{packages}": (packages) => packages.join(" "),
+  "{filters}": (packages) => packages.map((dir) => `--filter=./${dir}`).join(" "),
+};
+const isScoped = (command: string) => Object.keys(SCOPES).some((placeholder) => command.includes(placeholder));
 
 export interface LocalRunnerOptions {
   config: ResolvedConfig;
@@ -36,6 +46,8 @@ const SEAL_MANIFEST = ".seal.json";
 
 /** Only the end of a failing test's output reaches the belayer: the assertion is almost always there. */
 const FAILURE_TAIL = 4_000;
+/** Where the reproduction lives among the seals: kept and checked the same way, with no route of its own. */
+const REPRO = { id: "_repro", name: "reprodução" } as PlannedRoute;
 
 /**
  * Runs the real thing on this machine: survey, one worktree per route, anchor commands and commits,
@@ -46,6 +58,8 @@ export class LocalRunner implements Runner {
   private readonly workspaces = new Map<string, Workspace>();
   private readonly sealWorkspaces = new Map<string, Workspace>();
   private readonly sealed = new Map<string, SealedTests>();
+  /** The reproduction of a bug, and the route whose send runs it. */
+  private repro?: { route: string; files: SealedFile[] };
   /** Route branches, kept after their worktrees are gone, for the merge into the delivery branch. */
   private readonly branches = new Map<string, string>();
   private worktrees?: Promise<Worktrees>;
@@ -89,15 +103,8 @@ export class LocalRunner implements Runner {
     verify?: AnchorVerify,
   ): Promise<AnchorResult> {
     const workspace = this.workspaceOf(route);
-    const passed: string[] = [];
-    for (const command of commands) {
-      const result = await this.run(command, workspace.root);
-      if (result.code !== 0) {
-        const why = result.timedOut ? "tempo esgotado" : `código ${result.code}`;
-        return { ok: false, checks: [...passed, command], output: `${command} falhou (${why})\n${result.output}` };
-      }
-      passed.push(command);
-    }
+    const { passed, failed } = await this.runChecks(workspace, commands, "commit");
+    if (failed) return failed;
     const problem = await verify?.((command) => this.exec(route, command));
     if (problem) return { ok: false, checks: passed, output: problem };
     const title = route.pitches[pitch - 1]?.title ?? `pitch ${pitch}`;
@@ -130,12 +137,81 @@ export class LocalRunner implements Runner {
 
   /** Sealed tests (and, for diamond, the full suite) on the route's last commit, never in the climber's worktree. */
   async send(route: PlannedRoute, attempt: number, commands: readonly string[]): Promise<SendResult> {
-    const sealed = this.sealed.get(route.id)?.files ?? [];
-    const failures = await this.withSealed(route, this.workspaceOf(route).branch, `send-${attempt}`, async (root) => [
-      ...(await this.runSealed(root, sealed)),
-      ...(await this.runSuite(root, commands)),
-    ]);
+    // A route da correção também roda o teste de reprodução, que precisa passar agora.
+    const sealed = [...(this.sealed.get(route.id)?.files ?? []), ...(this.repro?.route === route.id ? this.repro.files : [])];
+    const failures = await this.withSealed(
+      route,
+      this.workspaceOf(route).branch,
+      `send-${attempt}`,
+      async (root) => [...(await this.runSealed(root, sealed)), ...(await this.runSuite(root, commands))],
+      sealed,
+    );
     return { ok: failures.length === 0, total: sealed.filter((file) => file.kind !== "support").length + commands.length, failures };
+  }
+
+  // ── reprodução ────────────────────────────────────────────────────────
+
+  async prepareRepro(): Promise<RouteWorkspace> {
+    return this.prepareSeal(REPRO);
+  }
+
+  /** Keeps the reproduction away from the project and runs each file on the code as it is: all must fail. */
+  async reproRed(files: readonly SealedFile[]): Promise<{ allRed: boolean; passing: string[]; output: string }> {
+    this.keep(REPRO, files);
+    await this.dropSealWorkspace(REPRO);
+    const failures = await this.withSealed(REPRO, "HEAD", "red", async (root) => this.runSealed(root, files), files);
+    const failing = new Set(failures.map((failure) => failure.test));
+    const passing = files.filter((file) => file.kind !== "support" && !failing.has(file.path)).map((file) => file.path);
+    const output = failures.map((failure) => `${failure.test}:\n${failure.output}`).join("\n");
+    return { allRed: passing.length === 0, passing, output: output.slice(-FAILURE_TAIL) };
+  }
+
+  async restoreRepro(): Promise<SealedFile[] | null> {
+    const kept = await this.restoreSeal(REPRO);
+    return kept?.files.length ? kept.files : null;
+  }
+
+  setRepro(route: PlannedRoute, files: readonly SealedFile[]): void {
+    this.repro = { route: route.id, files: [...files] };
+  }
+
+  /** Writes tests into the route's worktree and commits them; a file the climber wrote differently is left alone. */
+  async adoptTests(route: PlannedRoute, files: readonly SealedFile[], message: string): Promise<{ adopted: string[]; skipped: string[] }> {
+    const workspace = this.workspaceOf(route);
+    const adopted: string[] = [];
+    const skipped: string[] = [];
+    for (const file of files) {
+      const existing = readText(join(workspace.root, file.path));
+      if (existing !== null && existing !== file.content) skipped.push(file.path);
+      else {
+        write(workspace.root, file);
+        adopted.push(file.path);
+      }
+    }
+    if (adopted.length) await (await this.openWorktrees()).commit(workspace, message);
+    return { adopted, skipped };
+  }
+
+  async statusSinceBase(route: PlannedRoute): Promise<{ status: string; path: string }[]> {
+    return (await this.openWorktrees()).statusSinceBase(this.workspaceOf(route));
+  }
+
+  /** Each file must fail on the route's base (a checkout of it, with the file) and pass in the route's worktree. */
+  async reproduces(route: PlannedRoute, paths: readonly string[]): Promise<{ path: string; failedBefore: boolean; passesNow: boolean }[]> {
+    const workspace = this.workspaceOf(route);
+    const results: { path: string; failedBefore: boolean; passesNow: boolean }[] = [];
+    for (const path of paths) {
+      const content = readText(join(workspace.root, path));
+      if (content === null) {
+        results.push({ path, failedBefore: false, passesNow: false });
+        continue;
+      }
+      const file: SealedFile = { path, content, kind: "unit" };
+      const before = await this.withSealed(route, workspace.base, "repro-antes", async (root) => this.runSealed(root, [file]), [file]);
+      const now = await this.run(this.fileCommand(file), workspace.root);
+      results.push({ path, failedBefore: before.length > 0, passesNow: now.code === 0 });
+    }
+    return results;
   }
 
   async diff(route: PlannedRoute): Promise<string> {
@@ -159,17 +235,39 @@ export class LocalRunner implements Runner {
 
   async anchorDelivery(_attempt: number, commands: readonly string[], message: string): Promise<AnchorResult> {
     const delivery = await this.openDelivery();
+    const { passed, failed } = await this.runChecks(delivery, commands, "base");
+    if (failed) return failed;
+    const commit = await (await this.openWorktrees()).commit(delivery, message);
+    return { ok: true, checks: passed, commit: commit?.hash, files: commit?.files };
+  }
+
+  /**
+   * Runs each check in order and stops at the first failure. In a monorepo, `{packages}` and `{filters}` become the
+   * workspace packages the change touched; a scoped check with no package touched has nothing to run.
+   */
+  private async runChecks(
+    workspace: Workspace,
+    commands: readonly string[],
+    since: "commit" | "base",
+  ): Promise<{ passed: string[]; failed?: AnchorResult }> {
+    const scoped = commands.some(isScoped)
+      ? packagesOf(await (await this.openWorktrees()).changedFiles(workspace, since), workspacePackages(this.options.config.projectRoot))
+      : [];
     const passed: string[] = [];
-    for (const command of commands) {
-      const result = await this.run(command, delivery.root);
+    for (const template of commands) {
+      if (isScoped(template) && !scoped.length) continue;
+      const command = Object.entries(SCOPES).reduce(
+        (text, [placeholder, expand]) => text.replaceAll(placeholder, expand(scoped)),
+        template,
+      );
+      const result = await this.run(command, workspace.root);
       if (result.code !== 0) {
         const why = result.timedOut ? "tempo esgotado" : `código ${result.code}`;
-        return { ok: false, checks: [...passed, command], output: `${command} falhou (${why})\n${result.output}` };
+        return { passed, failed: { ok: false, checks: [...passed, command], output: `${command} falhou (${why})\n${result.output}` } };
       }
       passed.push(command);
     }
-    const commit = await (await this.openWorktrees()).commit(delivery, message);
-    return { ok: true, checks: passed, commit: commit?.hash, files: commit?.files };
+    return { passed };
   }
 
   async sendDelivery(attempt: number, commands: readonly string[]): Promise<SendResult> {
@@ -209,11 +307,17 @@ export class LocalRunner implements Runner {
   // ── sealed tests ──────────────────────────────────────────────────────
 
   /** A throwaway checkout of `ref` with the sealed files in place, removed as soon as `work` is done. */
-  private async withSealed<T>(route: PlannedRoute, ref: string, label: string, work: (root: string) => Promise<T>): Promise<T> {
+  private async withSealed<T>(
+    route: PlannedRoute,
+    ref: string,
+    label: string,
+    work: (root: string) => Promise<T>,
+    files: readonly SealedFile[] = this.sealed.get(route.id)?.files ?? [],
+  ): Promise<T> {
     const worktrees = await this.openWorktrees();
     const checkout = await worktrees.scratch(this.options.climbId, `${route.id}.${label}`, ref);
     try {
-      for (const file of this.sealed.get(route.id)?.files ?? []) write(checkout.root, file);
+      for (const file of files) write(checkout.root, file);
       return await work(checkout.root);
     } finally {
       await worktrees.remove(checkout);

@@ -1,0 +1,19 @@
+{
+  "id": "react-28713",
+  "keywords": ["react", "do", "while"],
+  "repo": "https://github.com/react/react.git",
+  "base": "9daabc0bf^",
+  "reference": "7c4a7c9dd",
+  "intent": "fix",
+  "request": "No repositório do React, corrija a issue #28713: a regra react-hooks/rules-of-hooks (packages/eslint-plugin-react-hooks) não considera violação chamar um hook dentro de um loop do/while. Exemplo:\n\nfunction ComponentWithHookInsideDoWhile() {\n  do {\n    useHookInsideLoop();\n  } while (true);\n}\n\nO esperado é o mesmo erro que a regra já dá para hooks nos outros loops: React Hook \"useHookInsideLoop\" may be executed more than once. Possibly because it is called in a loop. React Hooks must be called in the exact same order in every component render. Acrescente testes em packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js. Os testes do plugin rodam com: node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "hidden": {
+    "command": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js",
+    "files": ["packages/eslint-plugin-react-hooks/__tests__/ESLintRulesOfHooks-test.js"]
+  },
+  "projectTest": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "source": [
+    "https://github.com/react/react/issues/28713",
+    "https://github.com/react/react/pull/28714",
+    "https://github.com/react/react/pull/31720"
+  ]
+}

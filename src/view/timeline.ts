@@ -1,6 +1,6 @@
 import { summarizeCall, type CallName } from "../domain/calls.ts";
 import type { EventType, MohsEvent } from "../domain/events.ts";
-import { describeWindows } from "../domain/plan.ts";
+import { describeWait, describeWindows } from "../domain/plan.ts";
 import { findRoute } from "./reduction.ts";
 import type { ClimbView, TimelineEntry, Tone } from "./types.ts";
 
@@ -27,6 +27,21 @@ const DESCRIBERS: DescriberMap = {
     text: `${data.files} arquivos mapeados · ${data.kind === "variation" ? "variation" : "first ascent"}`,
   }),
   "line.drafted": ({ actor }) => ({ tag: "line", tone: "warn", who: actor, text: "line pronta, aguardando sua assinatura" }),
+  "repro.red": ({ data }) => ({ tag: "repro", tone: "plain", who: "reproducer", text: `bug reproduzido: ${data.shows}` }),
+  "repro.adopted": ({ route }) => ({
+    tag: "repro",
+    tone: "ok",
+    who: "basecamp",
+    text: `route ${route}: teste de reprodução entra no projeto`,
+  }),
+  "line.decided": ({ data }) => ({
+    tag: "decided",
+    tone: "plain",
+    who: "humano",
+    text: data.decisions
+      .map((decision) => `${decision.id}: ${decision.answer}${decision.by === "recommended" ? "" : " (escolha do humano)"}`)
+      .join(" · "),
+  }),
   "line.signed": ({ data }) => ({ tag: "signed", tone: "ok", who: data.by, text: `line assinada (${data.hash.slice(0, 7)})` }),
   "beta.accepted": ({ data }) => ({
     tag: "beta",
@@ -123,7 +138,7 @@ const DESCRIBERS: DescriberMap = {
     tag: "waiting",
     tone: "muted",
     who: "basecamp",
-    text: `route ${route} pronta, esperando ${data.for.join(", ")} entrar na entrega`,
+    text: `route ${route} pronta, ${describeWait(data.for)}`,
   }),
   "window.opened": ({ data }) => ({
     tag: "window",

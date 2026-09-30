@@ -1,4 +1,5 @@
 import { existsSync } from "node:fs";
+import type { LineDecision } from "../domain/decisions.ts";
 import { join } from "node:path";
 import { CLIMB_FILES, LINE_TARGET, signatureFile } from "../basecamp/desk.ts";
 import { EVENTS_FILE, readEvents } from "../basecamp/event-log.ts";
@@ -23,7 +24,7 @@ export type Situation =
   | { kind: "board"; tasks: TaskBrief[] }
   /** The tasks this agent asked for belong to a role it may not take after `took` (the belayer never implements). */
   | { kind: "apart"; tasks: TaskBrief[]; took: Role }
-  | { kind: "signature"; target: string; what: string; review: string }
+  | { kind: "signature"; target: string; what: string; review: string; decisions?: LineDecision[] }
   | { kind: "rescue"; reason: string; options: RescueOption[]; route?: string }
   | { kind: "working"; detail: string }
   | { kind: "done"; view: ClimbView }
@@ -88,7 +89,13 @@ export function readSituation(climbDir: string): Situation {
   if (view.rescue) return { kind: "rescue", reason: view.rescue.reason, options: view.rescue.options, route: view.rescue.route };
   if (view.state === "awaiting_signature" && !view.line?.signed) {
     if (view.autoSign) return { kind: "working", detail: "assinando a line automaticamente (--auto-sign)" };
-    return { kind: "signature", target: LINE_TARGET, what: "A line", review: join(climbDir, CLIMB_FILES.line) };
+    return {
+      kind: "signature",
+      target: LINE_TARGET,
+      what: "A line",
+      review: join(climbDir, CLIMB_FILES.line),
+      decisions: view.line?.decisions,
+    };
   }
   if (pending) {
     if (view.autoSign) return { kind: "working", detail: "assinando automaticamente (--auto-sign)" };
@@ -105,6 +112,40 @@ export async function waitForSituation(climbDir: string, timeoutMs: number, poll
     if (situation.kind !== "working" || Date.now() >= deadline) return situation;
     await sleep(pollMs);
   }
+}
+
+/**
+ * After an answer, waits for what comes next for whoever answered. While the Basecamp still works on the answered
+ * route for that role (a climber's anchor runs or its route is sent, a belayer's seal is checked), tasks that were
+ * already open do not count: the same agent's next task opens in seconds, and it must not stop at someone else's.
+ */
+export async function waitForNextStep(
+  climbDir: string,
+  answered: TaskRecord,
+  openBefore: ReadonlySet<string>,
+  timeoutMs: number,
+  pollMs = 250,
+): Promise<Situation> {
+  const deadline = Date.now() + timeoutMs;
+  for (;;) {
+    const situation = readSituation(climbDir);
+    const settled =
+      situation.kind === "task"
+        ? [situation.task, ...situation.others].some((task) => !openBefore.has(task.id)) ||
+          !stillWorkingFor(project(readEvents(join(climbDir, EVENTS_FILE))), answered)
+        : situation.kind !== "working";
+    if (settled || Date.now() >= deadline) return situation;
+    await sleep(pollMs);
+  }
+}
+
+/** Whether the Basecamp is still working on what this answer set off, so more work for the same role may follow. */
+function stillWorkingFor(view: ClimbView, answered: TaskRecord): boolean {
+  const route = view.routes.find((candidate) => candidate.id === answered.route);
+  if (!route || route.waitingFor?.length) return false;
+  if (answered.role === "climber") return route.state === "pitching" || route.state === "sending";
+  if (answered.role === "belayer") return Boolean(route.seal && !route.seal.red) && route.state !== "abandoned";
+  return false;
 }
 
 export type Pickup = { kind: "accepted" } | { kind: "rejected"; reason: string } | { kind: "pending" } | { kind: "stopped" };

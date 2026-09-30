@@ -2,7 +2,7 @@ import { join } from "node:path";
 import { EVENTS_FILE, readEvents } from "../basecamp/event-log.ts";
 import type { EventType, MohsEvent } from "../domain/events.ts";
 import { countScenarios } from "../domain/line.ts";
-import { describeWindows } from "../domain/plan.ts";
+import { describeWait, describeWindows } from "../domain/plan.ts";
 import { listTasks } from "../tasks/file-board.ts";
 import { project } from "../view/reducer.ts";
 
@@ -96,6 +96,13 @@ const DECISIONS: { [K in EventType]?: Describe<K> } = {
     detail: data.reason,
     tone: "human",
   }),
+  "line.decided": ({ data }) => ({
+    who: "humano",
+    role: "human",
+    title: `Decisões da line: ${data.decisions.filter((decision) => decision.by !== "recommended").length} de ${data.decisions.length} fora da recomendada`,
+    detail: data.decisions.map((decision) => `${decision.id} → ${decision.answer}`).join(" · "),
+    tone: "human",
+  }),
   "line.signed": ({ data }) => ({
     who: data.by,
     role: "human",
@@ -175,7 +182,7 @@ const DECISIONS: { [K in EventType]?: Describe<K> } = {
   "route.waiting": ({ route, data }) => ({
     who: "basecamp",
     role: "basecamp",
-    title: `Route ${route} pronta, esperando ${data.for.join(", ")} entrar na entrega`,
+    title: `Route ${route} pronta, ${describeWait(data.for)}`,
     tone: "plain",
   }),
   "window.opened": ({ data }) => ({
@@ -402,7 +409,11 @@ export function buildReport(climbDir: string): ReportData {
           draftedAt: drafted?.ts,
           signedAt: signed?.ts,
           drafts: view.line.drafts,
-          decisions: decisionsIn(lineText),
+          decisions: view.line.settled
+            ? view.line.settled.map(
+                (decision) => `${decision.question} → ${decision.answer}${decision.by === "recommended" ? "" : " (escolha do humano)"}`,
+              )
+            : decisionsIn(lineText),
           scenarios: countScenarios(lineText),
         }
       : undefined,

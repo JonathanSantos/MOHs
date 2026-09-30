@@ -1,6 +1,6 @@
 // Validações do MOHs: um pedido, vários braços (com e sem harness), cada um num subagente e numa pasta isolada.
 // O protocolo está em docs/VALIDATION.md. Uso: npm run validate -- <comando> … (sem argumentos, mostra a ajuda).
-import { execFileSync } from "node:child_process";
+import { execFileSync, spawnSync } from "node:child_process";
 import {
   chmodSync,
   cpSync,
@@ -17,7 +17,12 @@ import { homedir, tmpdir } from "node:os";
 import { basename, join, relative, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseArgs } from "node:util";
+import { latestClimbId } from "../../src/basecamp/event-log.ts";
+import { AGENT_SKILL } from "../../src/cli/commands/agent.ts";
+import { ROLE_AGENTS, roleAgentFile } from "../../src/cli/scaffold/agents.ts";
+import { linkDependencies } from "../../src/workspace/worktrees.ts";
 import { ARMS, DEFAULT_ARMS } from "./arms.ts";
+import { issueDir, listIssues, loadIssue, prepareIssue } from "./issues.ts";
 import { renderValidationReport } from "./report.ts";
 
 const REPO = fileURLToPath(new URL("../../", import.meta.url));
@@ -54,6 +59,8 @@ export interface RunInfo {
   /** The commit of each frozen MOHs: `working` is the repository as it was, uncommitted changes included. */
   mohs: Record<string, { commit: string; dirty: boolean }>;
   arms: RunArm[];
+  /** The project's own suite, when `npm test` is too big to run per arm (a monorepo): a command run at the root. */
+  projectTest?: string;
 }
 
 export interface RunSpec {
@@ -64,6 +71,7 @@ export interface RunSpec {
   /** Arm ids, `id@ref` to run a MOHs arm on another version (`mohs@a4f285f`). */
   arms?: readonly string[];
   reps?: number;
+  projectTest?: string;
   /** Where `.validation/` lives; the repository by default. */
   base?: string;
   now?: Date;
@@ -120,6 +128,7 @@ export function createRun(spec: RunSpec): RunInfo {
       git(armDir, "init", "-q", "-b", "main");
       git(armDir, "add", "-A");
       git(armDir, ...IDENTITY, "commit", "-q", "--allow-empty", "-m", "base da validação");
+      installDependencies(armDir);
       const runArm: RunArm = { name: armName, arm, ref, dir: armDir };
       if (ARMS[arm].usesMohs) {
         const frozen = mohsFolder(dir, ref);
@@ -143,10 +152,29 @@ export function createRun(spec: RunSpec): RunInfo {
     createdAt: (spec.now ?? new Date()).toISOString(),
     mohs: versions,
     arms: runArms,
+    ...(spec.projectTest ? { projectTest: spec.projectTest } : {}),
   };
   writeFileSync(join(dir, "run.json"), JSON.stringify(info, null, 2));
   writePrompts(info);
   return info;
+}
+
+/** The template's dependencies, installed before any arm runs: no arm spends its time (or its network) on them. */
+function installDependencies(dir: string): void {
+  const shell = process.platform === "win32";
+  if (existsSync(join(dir, "package-lock.json"))) {
+    execFileSync("npm", ["ci", "--silent", "--no-audit", "--no-fund"], { cwd: dir, stdio: "ignore", shell });
+    return;
+  }
+  if (!existsSync(join(dir, "yarn.lock"))) return;
+  // yarn 1 pelo npx, rodado de fora da pasta: o npx valida o package.json de onde roda (e o de um projeto pode ter campos
+  // que ele não conhece). Um postinstall do projeto que falha (uma checagem de versão do Node) não desfaz a instalação.
+  const args = ["--yes", "yarn@1.22.22", "--cwd", dir, "install", "--frozen-lockfile", "--ignore-engines", "--network-timeout", "600000"];
+  const result = spawnSync("npx", args, { cwd: tmpdir(), encoding: "utf8", shell });
+  if (result.status !== 0) {
+    const tail = `${result.stdout ?? ""}${result.stderr ?? ""}`.trim().split("\n").slice(-3).join(" · ");
+    console.warn(`aviso: o yarn install em ${basename(dir)} terminou com erro (${tail}); confira se as dependências bastam`);
+  }
 }
 
 function mohsFolder(dir: string, ref: string | undefined): string {
@@ -258,6 +286,97 @@ export function totalUsage(parts: readonly Usage[] | undefined): Usage | undefin
   });
 }
 
+/** Where Claude Code keeps session transcripts; each subagent is `<session>/subagents/agent-<id>.jsonl` plus a `.meta.json`. */
+export const TRANSCRIPTS_DIR = join(homedir(), ".claude", "projects");
+
+interface TranscriptLine {
+  type?: string;
+  timestamp?: string;
+  message?: { content?: unknown; usage?: Record<string, number> };
+}
+
+/**
+ * The usage of an arm's subagent and of every subagent it created, read from the transcripts: nothing depends on the
+ * orchestrator remembering to report its children. Tokens are each agent's context at its last turn (what the Agent
+ * tool reports); time is the arm agent's own work, run by run (waits for the human between runs are left out), and 0
+ * for the nested ones, which run inside it.
+ */
+export function usageFromTranscripts(agentId: string, root = TRANSCRIPTS_DIR): Usage[] {
+  const file = findTranscript(agentId, root);
+  if (!file) throw new Error(`transcrição do subagente ${agentId} não encontrada em ${root}`);
+  const dir = join(file, "..");
+  const metas = readdirSync(dir)
+    .filter((name) => name.endsWith(".meta.json"))
+    .map((name) => ({ id: name.slice("agent-".length, -".meta.json".length), ...(readJson<AgentMeta>(join(dir, name)) ?? {}) }));
+  const descendants = (id: string): AgentMeta[] =>
+    metas.filter((meta) => meta.parentAgentId === id).flatMap((meta) => [meta, ...descendants(meta.id!)]);
+  const top = transcriptUsage(file);
+  return [
+    { ...top, note: "subagente do braço (transcrição)" },
+    ...descendants(agentId).map((meta) => {
+      const nested = transcriptUsage(join(dir, `agent-${meta.id}.jsonl`));
+      return {
+        ...nested,
+        ms: 0,
+        note: `${meta.agentType ?? "subagente"} · ${meta.description ?? meta.id} (${nested.ms} ms, dentro do tempo de quem o criou)`,
+      };
+    }),
+  ];
+}
+
+interface AgentMeta {
+  id?: string;
+  agentType?: string;
+  description?: string;
+  parentAgentId?: string;
+}
+
+function findTranscript(agentId: string, root: string): string | undefined {
+  if (!existsSync(root)) return undefined;
+  for (const project of readdirSync(root)) {
+    const projectDir = join(root, project);
+    for (const session of existsSync(projectDir) ? readdirSync(projectDir) : []) {
+      const file = join(projectDir, session, "subagents", `agent-${agentId}.jsonl`);
+      if (existsSync(file)) return file;
+    }
+  }
+  return undefined;
+}
+
+function transcriptUsage(file: string): Usage {
+  const lines = readFileSync(file, "utf8")
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => JSON.parse(line) as TranscriptLine);
+  const last = lines.findLast((line) => line.message?.usage)?.message?.usage ?? {};
+  const tokens = ["input_tokens", "cache_creation_input_tokens", "cache_read_input_tokens", "output_tokens"].reduce(
+    (sum, key) => sum + (last[key] ?? 0),
+    0,
+  );
+  const tools = lines.reduce((sum, line) => {
+    const content = line.message?.content;
+    return sum + (Array.isArray(content) ? content.filter((block) => (block as { type?: string }).type === "tool_use").length : 0);
+  }, 0);
+  // Cada execução começa num prompt (uma mensagem do usuário que não é resultado de ferramenta): o tempo é a soma delas.
+  const isPrompt = (line: TranscriptLine) =>
+    line.type === "user" &&
+    !(Array.isArray(line.message?.content) && line.message.content.some((block) => (block as { type?: string }).type === "tool_result"));
+  let ms = 0;
+  let start: number | undefined;
+  let end: number | undefined;
+  for (const line of lines) {
+    const at = line.timestamp ? Date.parse(line.timestamp) : undefined;
+    if (at === undefined) continue;
+    if (isPrompt(line)) {
+      if (start !== undefined && end !== undefined) ms += end - start;
+      start = at;
+    }
+    end = at;
+  }
+  if (start !== undefined && end !== undefined) ms += end - start;
+  return { tokens, tools, ms };
+}
+
 function appendJson<T>(file: string, key: string, value: T): void {
   const all = readJson<Record<string, T[]>>(file) ?? {};
   (all[key] ??= []).push(value);
@@ -309,12 +428,12 @@ export function evaluateRun(dir: string, hidden: string): ArmResult[] {
   if (!info) throw new Error(`não há run.json em ${dir}`);
   cpSync(resolveHidden(hidden), join(dir, "_hidden"), { recursive: true });
   const usage = readJson<Record<string, Usage[]>>(join(dir, "_usage.json")) ?? {};
-  const results = info.arms.map((arm) => evaluateArm(arm, join(dir, "_hidden"), usage[arm.name]));
+  const results = info.arms.map((arm) => evaluateArm(arm, join(dir, "_hidden"), usage[arm.name], info.projectTest));
   writeFileSync(join(dir, "results.json"), JSON.stringify({ run: info.name, request: info.request, arms: results }, null, 2));
   return results;
 }
 
-function evaluateArm(arm: RunArm, hidden: string, usage: Usage[] | undefined): ArmResult {
+function evaluateArm(arm: RunArm, hidden: string, usage: Usage[] | undefined, projectTest?: string): ArmResult {
   const out = mkdtempSync(join(tmpdir(), "mohs-validation-"));
   const branch = arm.mohs ? deliveryBranch(arm.dir) : undefined;
   if (arm.mohs && branch) {
@@ -323,7 +442,11 @@ function evaluateArm(arm: RunArm, hidden: string, usage: Usage[] | undefined): A
     git(arm.dir, "archive", "--format=tar", "-o", archive, branch);
     execFileSync("tar", ["-xf", archive, "-C", out]);
     rmSync(archive);
-  } else if (!arm.mohs) cpSync(arm.dir, out, { recursive: true, filter: (src) => !/[\\/]\.git$/.test(src) });
+  } else if (!arm.mohs) cpSync(arm.dir, out, { recursive: true, filter: (src) => !/[\\/](\.git|node_modules)$/.test(src) });
+  // As dependências do braço valem para todos do mesmo jeito: a branch de entrega não as traz, e a suíte escondida as usa.
+  // Num monorepo, cada pacote do workspace pode ter as suas.
+  // Os pacotes do workspace apontam para a cópia avaliada, não para o código de antes que está na pasta do braço.
+  if (!nothingDelivered(arm, branch)) linkDependencies(arm.dir, out);
 
   const numstat = branch ? git(arm.dir, "diff", "--numstat", `main..${branch}`) : arm.mohs ? "" : worktreeNumstat(arm.dir);
   const diff = numstat
@@ -337,15 +460,15 @@ function evaluateArm(arm: RunArm, hidden: string, usage: Usage[] | undefined): A
       },
       { files: 0, added: 0, removed: 0 },
     );
-  const nothing = Boolean(arm.mohs && !branch);
+  const nothing = nothingDelivered(arm, branch);
   // A suíte do projeto roda antes de a escondida entrar na pasta: senão ela também a descobriria.
-  const project = nothing ? null : projectSuite(out);
+  const project = nothing ? null : projectSuite(out, projectTest);
   return {
     name: arm.name,
     arm: arm.arm,
     ref: arm.ref,
     delivered: branch ?? (arm.mohs ? "nada entregue" : "working tree"),
-    hidden: nothing ? { pass: 0, total: countFiles(hidden), failing: ["sem entrega"] } : hiddenSuite(out, hidden),
+    hidden: nothing ? { pass: 0, total: hiddenSize(hidden), failing: ["sem entrega"] } : hiddenSuite(out, hidden),
     project,
     diff,
     workingCopyIntact: arm.mohs ? git(arm.dir, "status", "--porcelain").trim() === "" : undefined,
@@ -355,9 +478,13 @@ function evaluateArm(arm: RunArm, hidden: string, usage: Usage[] | undefined): A
   };
 }
 
+const nothingDelivered = (arm: RunArm, branch: string | undefined) => Boolean(arm.mohs && !branch);
+
 /** The delivery branch of the latest climb, or its only route's branch. */
 function deliveryBranch(dir: string): string | undefined {
-  const branches = git(dir, "branch", "--list", "mohs/*", "--format=%(refname:short)").trim().split("\n").filter(Boolean).sort();
+  const id = latestClimbId(join(dir, ".mohs"));
+  if (!id) return undefined;
+  const branches = git(dir, "branch", "--list", `mohs/${id}/*`, "--format=%(refname:short)").trim().split("\n").filter(Boolean).sort();
   return branches.find((b) => b.endsWith("/entrega")) ?? branches.at(-1);
 }
 
@@ -366,7 +493,33 @@ function worktreeNumstat(dir: string): string {
   return git(dir, "diff", "--cached", "--numstat");
 }
 
+/**
+ * A hidden suite that runs with the project's own test runner: `hidden.json` says where each file goes (replacing the
+ * arm's own version, if any) and the command that runs them, from the project root. Without it, the files are node:test
+ * files run from `acceptance/`.
+ */
+interface HiddenSpec {
+  command: string;
+  files: Record<string, string>;
+}
+
+function hiddenSpec(hidden: string): HiddenSpec | null {
+  return readJson<HiddenSpec>(join(hidden, "hidden.json"));
+}
+
+function hiddenSize(hidden: string): number {
+  const spec = hiddenSpec(hidden);
+  return spec ? Object.keys(spec.files).length : countFiles(hidden);
+}
+
 function hiddenSuite(out: string, hidden: string): ArmResult["hidden"] {
+  const spec = hiddenSpec(hidden);
+  if (spec) {
+    for (const [to, from] of Object.entries(spec.files)) cpSync(join(hidden, from), join(out, to));
+    const output = runLine(spec.command, out);
+    const counts = testCounts(output);
+    return { pass: counts.pass, total: counts.total, failing: failing(output) };
+  }
   const target = join(out, "acceptance");
   cpSync(hidden, target, { recursive: true });
   const files = readdirSync(target, { recursive: true })
@@ -377,11 +530,25 @@ function hiddenSuite(out: string, hidden: string): ArmResult["hidden"] {
   return { pass: count(output, "pass"), total: count(output, "tests"), failing: failing(output) };
 }
 
-function projectSuite(out: string): ArmResult["project"] {
+function projectSuite(out: string, command?: string): ArmResult["project"] {
+  if (command) {
+    const counts = testCounts(runLine(command, out));
+    return { pass: counts.pass, fail: counts.fail };
+  }
   const pkg = readJson<{ scripts?: Record<string, string> }>(join(out, "package.json"));
   if (!pkg?.scripts?.test) return null;
   const output = run("npm", ["test", "--silent"], out);
   return { pass: count(output, "pass"), fail: count(output, "fail") };
+}
+
+/** Test totals from node:test (ℹ pass N) or jest (Tests: 2 failed, 214 passed, 216 total). */
+export function testCounts(output: string): { pass: number; fail: number; total: number } {
+  const jest = /^Tests:\s+(.*?)(\d+) total/m.exec(output);
+  if (jest) {
+    const of = (word: string) => Number(new RegExp(`(\\d+) ${word}`).exec(jest[1])?.[1] ?? 0);
+    return { pass: of("passed"), fail: of("failed"), total: Number(jest[2]) };
+  }
+  return { pass: count(output, "pass"), fail: count(output, "fail"), total: count(output, "tests") };
 }
 
 export interface ClimbMetrics {
@@ -404,8 +571,7 @@ export interface ClimbMetrics {
 /** What the latest climb's log says: flow, human waits, ceremony and evidence. */
 function climbMetrics(dir: string): ClimbMetrics | null {
   const climbs = join(dir, ".mohs", "climbs");
-  if (!existsSync(climbs)) return null;
-  const id = readdirSync(climbs).sort().at(-1);
+  const id = latestClimbId(join(dir, ".mohs"));
   if (!id) return null;
   const events = readFileSync(join(climbs, id, "events.jsonl"), "utf8")
     .trim()
@@ -474,6 +640,21 @@ export function writeReport(dir: string): string {
   return file;
 }
 
+// ── agentes por papel ──────────────────────────────────────────────────────
+
+/**
+ * The role agents (`.claude/agents/mohs-*.md`) of this repository. The arms' orchestrators are subagents of the
+ * session that runs the validation, so the agents they create come from here, and Claude Code loads them when the
+ * session opens: after writing or changing them, open a new session.
+ */
+export function roleAgentFiles(): { file: string; content: string }[] {
+  const skill = readFileSync(AGENT_SKILL, "utf8");
+  return ROLE_AGENTS.map((agent) => ({
+    file: join(REPO, ".claude", "agents", `${agent.name}.md`),
+    content: roleAgentFile("claude", agent, skill, "mohs"),
+  }));
+}
+
 // ── plumbing ───────────────────────────────────────────────────────────────
 
 function git(cwd: string, ...args: string[]): string {
@@ -497,25 +678,37 @@ function run(command: string, args: string[], cwd: string): string {
   }
 }
 
+/** A command line as the user would type it (`node ./scripts/jest/jest-cli.js packages/x`), run at `cwd`. */
+function runLine(commandLine: string, cwd: string): string {
+  const { NODE_TEST_CONTEXT: _inherited, ...env } = process.env;
+  const result = spawnSync(commandLine, { cwd, encoding: "utf8", env, shell: true, maxBuffer: 64 * 1024 * 1024 });
+  return `${result.stdout ?? ""}${result.stderr ?? ""}`;
+}
+
 /** node:test totals, from the spec reporter (ℹ) or TAP (#). */
 const count = (output: string, key: string) => Number(new RegExp(`^[ℹ#] ${key} (\\d+)`, "m").exec(output)?.[1] ?? 0);
 const failing = (output: string) =>
-  [...new Set([...output.matchAll(/^\s*✖ (.+?) \(\d/gm)].map((match) => match[1]))].filter((name) => !/\.(test|spec)\./.test(name));
+  [...new Set([...output.matchAll(/^\s*[✖✕] (.+?) \(\d/gm)].map((match) => match[1]))].filter((name) => !/\.(test|spec)\./.test(name));
 const countFiles = (dir: string) => readdirSync(dir, { recursive: true }).filter((file) => /\.(test|spec)\./.test(String(file))).length;
 
 // ── CLI ────────────────────────────────────────────────────────────────────
 
 const HELP = `Validações do MOHs (protocolo em docs/VALIDATION.md)
 
-  new <palavra> <palavra> <palavra> --request "<pedido>" --template <nome|pasta> [--arms direto,placebo,mohs-fix,mohs] [--reps N]
+  new <palavra> <palavra> <palavra> --request "<pedido>" --template <nome|pasta> [--arms …] [--reps N] [--project-test "<comando>"]
   hidden save <nome> <pasta>      guarda uma suíte escondida fora do repositório
   hidden list                     lista as suítes guardadas
-  usage <validação> <braço> --tokens N --tools N --ms N [--note "…"]   soma uma parcela do uso
+  usage <validação> <braço> --agent <id>   lê o uso do subagente do braço e de todos os que ele criou nas transcrições
+  usage <validação> <braço> --tokens N --tools N --ms N [--note "…"]   soma uma parcela à mão
   decision <validação> <braço> "<o que o humano decidiu>"
   relato <validação> <braço> --file <arquivo>   guarda o relato final do subagente
   eval <validação> --hidden <nome|pasta>
   report <validação>              gera <validação>/index.html
   list                            mostra as validações
+  agents                          grava os agentes por papel em .claude/agents (abra uma sessão nova depois)
+  issue list                      o gym de issues reais (gym/issues)
+  issue prepare <id>              base com dependências e suíte escondida conferida (falha na base, passa na referência)
+  issue new <id> [--arms …] [--reps N]   cria a validação da issue (padrão: direto, mohs-solo e mohs, 3 repetições)
 
 Braços: ${Object.keys(ARMS).join(", ")} (use braço@commit para outra versão do MOHs, ex.: mohs@a4f285f).
 Templates em gym/templates: ${existsSync(TEMPLATES_DIR) ? readdirSync(TEMPLATES_DIR).join(", ") : "nenhum"}.`;
@@ -551,6 +744,8 @@ function main(argv: string[]): number {
       tools: { type: "string" },
       ms: { type: "string" },
       note: { type: "string" },
+      agent: { type: "string" },
+      "project-test": { type: "string" },
       file: { type: "string" },
     },
   });
@@ -568,6 +763,7 @@ function main(argv: string[]): number {
         template: values.template,
         arms: values.arms?.split(",").map((arm) => arm.trim()),
         reps: values.reps ? Number(values.reps) : 1,
+        projectTest: values["project-test"],
       });
       console.log(`validação ${info.name}\n  ${relative(process.cwd(), info.dir)}`);
       for (const arm of info.arms) console.log(`  ${arm.name.padEnd(16)} ${ARMS[arm.arm].label} · prompt em _prompts/${arm.name}.md`);
@@ -582,6 +778,13 @@ function main(argv: string[]): number {
     }
     case "usage": {
       const [name, arm] = positionals;
+      if (values.agent) {
+        for (const part of usageFromTranscripts(values.agent)) {
+          recordUsage(runDir(name), arm, part);
+          console.log(`  ${Math.round(part.tokens / 1000)}k tokens · ${part.tools} ferramentas · ${part.note}`);
+        }
+        return 0;
+      }
       recordUsage(runDir(name), arm, {
         tokens: Number(values.tokens),
         tools: Number(values.tools),
@@ -609,6 +812,54 @@ function main(argv: string[]): number {
     case "report":
       console.log(`relatório em ${writeReport(runDir(positionals[0]))}`);
       return 0;
+    case "agents": {
+      for (const { file, content } of roleAgentFiles()) {
+        mkdirSync(join(file, ".."), { recursive: true });
+        writeFileSync(file, content);
+        console.log(`  escrito  ${relative(REPO, file)}`);
+      }
+      console.log("O Claude Code carrega os agentes ao abrir a sessão: abra uma sessão nova para os braços usarem estes.");
+      return 0;
+    }
+    case "issue": {
+      const [action, id] = positionals;
+      if (action === "list") {
+        for (const name of listIssues()) {
+          const spec = loadIssue(name);
+          const verified = readJson<{ base: { fail: number; total: number } }>(join(issueDir(name), "verified.json"));
+          const state = verified ? `conferida (${verified.base.fail} de ${verified.base.total} falham na base)` : "sem prepare";
+          console.log(`${name} · ${spec.intent} · ${state} · ${spec.source[0] ?? spec.repo}`);
+        }
+        return 0;
+      }
+      if (!id) throw new Error(HELP);
+      const spec = loadIssue(id);
+      if (action === "prepare") {
+        const prepared = prepareIssue(spec, installDependencies);
+        saveHidden(spec.id, prepared.hidden);
+        console.log(
+          `${spec.id}: base ${prepared.base.fail} de ${prepared.base.total} falham · referência ${prepared.reference.pass}/${prepared.reference.total}`,
+        );
+        console.log(`  template em ${prepared.template}; suíte escondida guardada como ${spec.id}`);
+        return 0;
+      }
+      if (action === "new") {
+        const template = join(issueDir(id), "template");
+        if (!existsSync(template)) throw new Error(`rode antes: npm run validate -- issue prepare ${id}`);
+        const info = createRun({
+          keywords: spec.keywords,
+          request: spec.request,
+          template,
+          arms: values.arms?.split(",").map((arm) => arm.trim()) ?? ["direto", "mohs-solo", "mohs"],
+          reps: values.reps ? Number(values.reps) : 3,
+          projectTest: spec.projectTest,
+        });
+        console.log(`validação ${info.name} · avalie com: npm run validate -- eval ${info.name} --hidden ${spec.id}`);
+        for (const arm of info.arms) console.log(`  ${arm.name.padEnd(16)} ${ARMS[arm.arm].label}`);
+        return 0;
+      }
+      throw new Error(HELP);
+    }
     case "list": {
       const root = join(REPO, VALIDATION_DIR);
       for (const name of existsSync(root) ? readdirSync(root).sort() : []) {

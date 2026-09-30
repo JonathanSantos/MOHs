@@ -350,6 +350,47 @@ pre {
   gap: 8px;
   align-items: center;
 }
+.panel .decision {
+  border: 1px solid var(--vein);
+  border-radius: 3px;
+  background: var(--chalk);
+  padding: 10px 14px 12px;
+}
+.panel .decision fieldset {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+}
+.panel .decision legend {
+  font-weight: 600;
+  padding: 0;
+  margin-bottom: 6px;
+}
+.panel .decision .against {
+  color: var(--warn);
+  font-weight: 600;
+}
+.panel .choice {
+  display: flex;
+  gap: 8px;
+  align-items: baseline;
+  line-height: 1.5;
+}
+.panel .choice small {
+  color: var(--slate);
+}
+.panel .choice input[type="text"] {
+  font: inherit;
+  min-width: min(40ch, 100%);
+  border: 1px solid var(--vein);
+  border-radius: 3px;
+  padding: 2px 6px;
+  background: var(--chalk);
+  color: var(--graphite);
+}
 .panel .hash {
   font: 400 11px var(--f-mono);
   color: var(--slate);

@@ -11,6 +11,10 @@ export interface Evidence {
 export interface EvidenceInput {
   /** Sealed test files that passed in the send. */
   sealed: number;
+  /** A solo climb: the tests came first and were locked, not sealed (their author also implemented). */
+  locked?: boolean;
+  /** Tests that reproduced the bug: failed before the change, pass after it. */
+  reproduced?: number;
   /** Commands the harness ran and saw pass (anchor, and the full suite in diamond). */
   commands: readonly string[];
   /** Test files in the project after the route: those it had plus those the route added. */
@@ -30,16 +34,21 @@ export function isTestCommand(command: string): boolean {
  * Grades what proved a route. A test command in a project without tests proves nothing about behaviour, so it
  * counts with the builds and lints. Sealed tests and the project's own tests are the two kinds of real proof.
  */
-export function gradeEvidence({ sealed, commands, projectTests, checks }: EvidenceInput): Evidence {
+export function gradeEvidence({ sealed, locked, reproduced = 0, commands, projectTests, checks }: EvidenceInput): Evidence {
   const testCommands = projectTests > 0 ? commands.filter(isTestCommand) : [];
   const others = commands.filter((command) => !testCommands.includes(command));
   const proofs = [
-    ...(sealed ? [`${sealed} ${sealed === 1 ? "teste selado" : "testes selados"}`] : []),
+    ...(sealed
+      ? [`${sealed} ${locked ? (sealed === 1 ? "teste travado" : "testes travados") : sealed === 1 ? "teste selado" : "testes selados"}`]
+      : []),
+    ...(reproduced
+      ? [`${reproduced === 1 ? "teste de reprodução" : `${reproduced} testes de reprodução`} (falhava antes, passa agora)`]
+      : []),
     ...(testCommands.length ? [`testes do projeto (${testCommands.join(", ")})`] : []),
     ...(others.length ? [`checagens sem teste (${others.join(", ")})`] : []),
     ...(checks ? [`${checks} ${checks === 1 ? "check" : "checks"} do projeto`] : []),
   ];
-  const kinds = Number(sealed > 0) + Number(testCommands.length > 0);
+  const kinds = Number(sealed > 0) + Number(reproduced > 0) + Number(testCommands.length > 0);
   const grade: EvidenceGrade = kinds === 2 ? "forte" : kinds === 1 ? "média" : proofs.length ? "fraca" : "nenhuma";
   return { grade, proofs };
 }

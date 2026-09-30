@@ -224,11 +224,11 @@ describe("agent driver: a coding agent climbs through mohs next and mohs call", 
     await mohs(root, "call", "line", LINE);
     await mohs(root, "sign");
     await mohs(root, "call", "bolts", "# Bolts · route A\n\ngreet(): string");
-    const belayer = await mohs(root, "next", "--role", "belayer");
+    const belayer = await mohs(root, "next", "--role", "belayer", "--as", "belayer-A");
     const sealed = 'import { greet } from "../../src/greet.js";\nif (greet() !== "oi") process.exit(1);\n';
     mkdirSync(join(workDir(belayer.out), "test/sealed"), { recursive: true });
     writeFileSync(join(workDir(belayer.out), "test/sealed/oi.js"), sealed);
-    await mohs(root, "call", "seal", JSON.stringify({ files: [{ path: "test/sealed/oi.js", kind: "unit" }] }));
+    await mohs(root, "call", "seal", "--as", "belayer-A", JSON.stringify({ files: [{ path: "test/sealed/oi.js", kind: "unit" }] }));
     const pitch1 = await mohs(root, "next", "--role", "climber", "--as", "climber-A");
     writeFileSync(join(workDir(pitch1.out), "src/greet.js"), 'export const greet = () => "oi";\n');
     const pitch2 = await mohs(root, "call", "safe", "greet() devolve oi", "--as", "climber-A");
@@ -249,9 +249,8 @@ describe("agent driver: a coding agent climbs through mohs next and mohs call", 
     writeFileSync(join(workDir(again.out), "src/greet.js"), '/** A saudação do app. */\nexport const greet = () => "oi";\n');
     const sent = await mohs(root, "call", "safe", "saudação documentada", "--as", "climber-A");
     assert.match(sent.out, /sent +route A · 1 testes selados passaram/, "the kept seal was restored, not written again");
-    await mohs(root, "call", "report", JSON.stringify({ findings: [] }));
-    const end = await mohs(root, "call", "beta", JSON.stringify({ proposals: [] }));
-    assert.match(end.out, /Climb concluído/);
+    const end = await mohs(root, "call", "report", JSON.stringify({ findings: [] }));
+    assert.match(end.out, /Climb concluído/, "a climb with no friction has no descent");
 
     const events = readEvents(join(dir, "events.jsonl"));
     const count = (type: string) => events.filter((event) => event.type === type).length;

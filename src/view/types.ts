@@ -1,6 +1,7 @@
 import type { ClimbState, RouteState } from "../domain/states.ts";
+import type { LineDecision, SettledDecision } from "../domain/decisions.ts";
 import type { Evidence } from "../domain/evidence.ts";
-import type { ClassifiedFinding, ClimbKind, FrictionKind, Hardness, Proposal, RescueOption } from "../domain/types.ts";
+import type { ClassifiedFinding, ClimbKind, FrictionKind, Hardness, Proposal, RescueOption, Intent } from "../domain/types.ts";
 
 export interface PitchView {
   n: number;
@@ -64,6 +65,8 @@ export interface RouteView {
   budget: number;
   bolts: boolean;
   seal?: { unit: number; e2e: number; red: boolean };
+  /** What the route waits for before it goes on: routes it starts from, or its own seal before the send. */
+  waitingFor?: string[];
   inspectors: string[];
   findings: FindingView[];
   friction: FrictionView[];
@@ -112,10 +115,13 @@ export interface ClimbView {
   scenario?: string;
   /** Line signatures are automatic in this climb (--auto-sign). */
   autoSign?: boolean;
+  /** One agent plays every role: the tests come first, visible and locked, instead of sealed. */
+  solo?: boolean;
   state: ClimbState;
   resumeTo?: ClimbState;
   kind?: ClimbKind;
   hardness?: Hardness;
+  intent?: Intent;
   reason?: string;
   startedAt: string;
   updatedAt: string;
@@ -124,7 +130,18 @@ export interface ClimbView {
   routes: RouteView[];
   windows: string[][];
   survey?: { files: number; summary: string };
-  line?: { hash: string; text: string; signed: boolean; signedBy?: string; drafts: number };
+  line?: {
+    hash: string;
+    text: string;
+    signed: boolean;
+    signedBy?: string;
+    drafts: number;
+    /** The setter's text without the decisions, and the decisions with their options, while the line waits. */
+    body?: string;
+    decisions?: LineDecision[];
+    /** What the human settled at the signature. */
+    settled?: SettledDecision[];
+  };
   /** The delivery branch that joins every route, when the climb has more than one. */
   delivery?: DeliveryView;
   /** Signatures besides the line's: diamond bolts and summits. */

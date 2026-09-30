@@ -178,6 +178,15 @@ describe("mohs agent install", () => {
     assert.equal(settings.hooks.PreToolUse[0].hooks[0].command, "./lint.sh");
     assert.equal(settings.hooks.Stop[0].hooks[0].command, "mohs hook stop --for claude");
     assert.match(readFileSync(join(root, ".claude/skills/mohs/SKILL.md"), "utf8"), /name: mohs/);
+    const climber = readFileSync(join(root, ".claude/agents/mohs-climber.md"), "utf8");
+    assert.match(climber, /^---\nname: mohs-climber\n/);
+    assert.match(climber, /\ntools: Read, Grep, Glob, Bash, Edit, Write\n/, "a role agent gets only its role's tools");
+    assert.match(climber, /## Regras\n/, "and the skill's rules");
+    assert.match(
+      readFileSync(join(root, ".claude/agents/mohs-planner.md"), "utf8"),
+      /\ntools: Read, Grep, Glob, Bash\n/,
+      "planning only reads",
+    );
   });
 
   it("writes a Copilot hooks file with handlers in Copilot's own shape", () => {
@@ -196,6 +205,11 @@ describe("mohs agent install", () => {
       timeoutSec: 15,
     });
     assert.match(readFileSync(join(root, ".github/skills/mohs/SKILL.md"), "utf8"), /name: mohs/);
+    assert.match(
+      readFileSync(join(root, ".github/agents/mohs-belayer.agent.md"), "utf8"),
+      /\ntools: \["read", "search", "execute", "edit"\]\n/,
+    );
+    assert.match(readFileSync(join(root, ".github/agents/mohs-inspector.agent.md"), "utf8"), /\ntools: \["read", "search", "execute"\]\n/);
   });
 });
 

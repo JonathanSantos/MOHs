@@ -1,10 +1,11 @@
 import assert from "node:assert/strict";
-import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, lstatSync, mkdirSync, readdirSync, readFileSync, realpathSync, symlinkSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { describe, it } from "node:test";
 import type { PlannedRoute } from "../src/domain/plan.ts";
 import { LocalRunner } from "../src/runner/local-runner.ts";
 import { runShell } from "../src/runner/shell.ts";
+import { dependencyFolders, linkDependencies } from "../src/workspace/worktrees.ts";
 import { git, gitProject } from "./git-helpers.ts";
 import { load, tempProject } from "./helpers.ts";
 
@@ -204,5 +205,68 @@ describe("local runner: seal and send", () => {
     writeFileSync(join(workspace.path, "src/greet.js"), 'export const greet = () => "oi";\n');
     await runner.anchor(QUARTZ, 1, 1, [PASS]);
     assert.deepEqual(await runner.send(QUARTZ, 1, []), { ok: true, total: 1, failures: [] }, "node --test runs a plain script too");
+  });
+});
+
+describe("dependencies of a checkout", () => {
+  it("finds the node_modules of the root, one level down and every workspace package", () => {
+    const root = tempProject({
+      "package.json": JSON.stringify({ workspaces: ["packages/*", "tools/lint"] }),
+      "node_modules/a/index.js": "",
+      "packages/web/node_modules/b/index.js": "",
+      "packages/api/package.json": "{}",
+      "tools/lint/node_modules/c/index.js": "",
+      "scripts/node_modules/d/index.js": "",
+    });
+    assert.deepEqual(dependencyFolders(root).sort(), [
+      "node_modules",
+      join("packages", "web", "node_modules"),
+      join("scripts", "node_modules"),
+      join("tools", "lint", "node_modules"),
+    ]);
+  });
+
+  it("points a workspace package at the checkout's own copy, and third-party ones at the root", () => {
+    const root = tempProject({
+      "package.json": JSON.stringify({ workspaces: ["packages/*"] }),
+      "packages/plugin/index.js": "module.exports = 'raiz';\n",
+      "node_modules/lodash/index.js": "",
+      "node_modules/@scope/tool/index.js": "",
+      "node_modules/.yarn-integrity": "{}",
+    });
+    symlinkSync(join("..", "packages", "plugin"), join(root, "node_modules", "plugin"));
+    const checkout = tempProject({ "packages/plugin/index.js": "module.exports = 'checkout';\n" });
+    linkDependencies(root, checkout);
+    assert.equal(realpathSync(join(checkout, "node_modules", "plugin")), realpathSync(join(checkout, "packages", "plugin")));
+    assert.equal(realpathSync(join(checkout, "node_modules", "lodash")), realpathSync(join(root, "node_modules", "lodash")));
+    assert.equal(
+      realpathSync(join(checkout, "node_modules", "@scope", "tool")),
+      realpathSync(join(root, "node_modules", "@scope", "tool")),
+    );
+    assert.ok(existsSync(join(checkout, "node_modules", ".yarn-integrity")));
+
+    const plain = tempProject({ "node_modules/lodash/index.js": "" });
+    const other = tempProject();
+    linkDependencies(plain, other);
+    assert.ok(lstatSync(join(other, "node_modules")).isSymbolicLink(), "with no workspace links, node_modules is linked whole");
+  });
+
+  it("runs a scoped check only for the workspace packages the pitch touched", async () => {
+    const root = gitProject({
+      "package.json": JSON.stringify({ workspaces: ["packages/*"] }),
+      "packages/a/index.js": "",
+      "packages/b/index.js": "",
+      ".gitignore": ".mohs/\n",
+    });
+    const route = { ...ROUTE, files: ["packages/a/index.js"] };
+    const runner = new LocalRunner({ config: load(root), climbId: "c9", worktreesDir: tempProject() });
+    const workspace = await runner.prepare(route);
+    writeFileSync(join(workspace.path, "packages/b/index.js"), "export {};\n");
+    const echo = 'node -e "process.exit(0)" --';
+    const result = await runner.anchor(route, 1, 1, [`${echo} {packages}`, `${echo} {filters}`]);
+    assert.deepEqual(result.checks, [`${echo} packages/b`, `${echo} --filter=./packages/b`]);
+    const idle = await runner.anchor(route, 1, 1, [`${echo} {packages}`]);
+    assert.deepEqual(idle.checks, [], "nothing changed in any package: nothing to run");
+    await runner.finish(route);
   });
 });

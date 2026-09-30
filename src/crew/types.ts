@@ -1,7 +1,8 @@
 import type { RackItem } from "../config/types.ts";
+import type { LineDecision } from "../domain/decisions.ts";
 import type { Croqui } from "../domain/croqui.ts";
 import type { PlannedRoute } from "../domain/plan.ts";
-import type { Finding, FixReason, FrictionKind, Hardness, Proposal, Role } from "../domain/types.ts";
+import type { Finding, FixReason, FrictionKind, Hardness, Proposal, Role, Intent } from "../domain/types.ts";
 import type { Pack } from "../pack/build.ts";
 import type { SurveyResult } from "../survey/survey.ts";
 import type { ClimbView } from "../view/types.ts";
@@ -66,6 +67,8 @@ export interface CrewObserver {
 
 /** Passed to every model-backed task, so whatever the crew reports lands on the climb. */
 export interface TaskContext {
+  /** A solo climb: one agent plays every role. */
+  solo?: boolean;
   observer: CrewObserver;
 }
 
@@ -103,6 +106,8 @@ export interface SealContext extends NotesContext {
   workspace: RouteWorkspace;
   attempt: number;
   feedback?: string;
+  /** A solo climb: the tests come first (TDD) and are locked, not sealed; their author will read them as climber. */
+  solo?: boolean;
 }
 
 export interface FallContext extends NotesContext {
@@ -115,6 +120,8 @@ export interface InspectContext extends NotesContext {
   /** The route's worktree, for reading around the diff. */
   workspace: RouteWorkspace;
   diff: string;
+  /** A solo climb: the inspector also wrote the code and its tests. */
+  solo?: boolean;
 }
 
 export interface PitchContext extends TaskContext {
@@ -132,7 +139,15 @@ export interface PitchContext extends TaskContext {
  * around, a note about something it saw outside the pitch, and the decisions it took alone.
  */
 export type PitchOutcome =
-  | { outcome: "safe"; summary: string; rock?: { command: string; error: string }; note?: string; decisions?: string[] }
+  | {
+      outcome: "safe";
+      summary: string;
+      rock?: { command: string; error: string };
+      note?: string;
+      decisions?: string[];
+      /** Test files the climber says reproduce the bug: the Basecamp checks they fail on the base and pass now. */
+      repro?: string[];
+    }
   | { outcome: "watch"; excerpt: string; question: string }
   | { outcome: "rock"; command: string; error: string }
   | { outcome: "escalate"; reason: string };
@@ -172,6 +187,22 @@ export interface FallReport extends Work {
  * The roles backed by a model. The simulated crew plays every role; the task crew grows phase by
  * phase and declares which hardness levels it can take to the summit.
  */
+/** A decision as the setter (or the scout, with a fluorite line) writes it: the Basecamp numbers it. */
+export type DraftDecision = Omit<LineDecision, "id">;
+
+/** The reproducer's task: a throwaway checkout of the code as it is, where the bug still happens. */
+export interface ReproContext extends TaskContext {
+  workspace: RouteWorkspace;
+  attempt: number;
+  feedback?: string;
+}
+
+/** What the setter reads besides the plan: the kind of request, and the test that reproduces a bug. */
+export interface LineContext extends TaskContext {
+  intent?: Intent;
+  repro?: string;
+}
+
 export interface Crew {
   readonly supportedHardness?: readonly Hardness[];
   /** The plan; for a climb of fluorite routes only, the scout may write the line with it and spare the setter. */
@@ -179,8 +210,15 @@ export interface Crew {
     request: string,
     survey: SurveyResult,
     context: TaskContext,
-  ): Promise<Work & { reason: string; routes: PlannedRoute[]; line?: string }>;
-  writeLine(request: string, routes: readonly PlannedRoute[], survey: SurveyResult, context: TaskContext): Promise<Work & { text: string }>;
+  ): Promise<Work & { reason: string; intent?: Intent; routes: PlannedRoute[]; line?: string; decisions?: DraftDecision[] }>;
+  writeLine(
+    request: string,
+    routes: readonly PlannedRoute[],
+    survey: SurveyResult,
+    context: LineContext,
+  ): Promise<Work & { text: string; decisions?: DraftDecision[] }>;
+  /** A test that fails today because of the bug (intent fix). A crew without it skips the step. */
+  reproduce?(request: string, survey: SurveyResult, context: ReproContext): Promise<Work & { files: SealedFile[]; shows: string }>;
   setBolts(route: PlannedRoute, context: NotesContext): Promise<Work & { text: string }>;
   seal(route: PlannedRoute, context: SealContext): Promise<Work & SealedTests>;
   climbPitch(route: PlannedRoute, pitch: number, context: PitchContext): Promise<PitchResult>;
@@ -264,6 +302,20 @@ export interface Runner {
   finishDelivery(): Promise<Delivery>;
   /** A resumed climb: the delivery branch an earlier run created, adopted before any route starts. */
   resumeDelivery?(): Promise<void>;
+  /** A throwaway checkout of the code as it is, for the reproducer. */
+  prepareRepro?(): Promise<RouteWorkspace>;
+  /** Keeps the reproduction away from the project and runs each file on the code as it is: all must fail. */
+  reproRed?(files: readonly SealedFile[]): Promise<{ allRed: boolean; passing: string[]; output: string }>;
+  /** The reproduction an earlier run kept, for a resumed climb. */
+  restoreRepro?(): Promise<SealedFile[] | null>;
+  /** The route whose send also runs the reproduction. */
+  setRepro?(route: PlannedRoute, files: readonly SealedFile[]): void;
+  /** Writes tests into the route's worktree and commits them (the reproduction, as a regression test). */
+  adoptTests?(route: PlannedRoute, files: readonly SealedFile[], message: string): Promise<{ adopted: string[]; skipped: string[] }>;
+  /** Files the route changed since it began, with git's status letter (A, M, D, R). */
+  statusSinceBase?(route: PlannedRoute): Promise<{ status: string; path: string }[]>;
+  /** Test files that reproduce a bug: each must fail on the route's base and pass on its last commit. */
+  reproduces?(route: PlannedRoute, paths: readonly string[]): Promise<{ path: string; failedBefore: boolean; passesNow: boolean }[]>;
   /** A resumed climb: the sealed tests an earlier run kept for the route, or null (then the route is sealed again). */
   restoreSeal?(route: PlannedRoute): Promise<SealedTests | null>;
   finish(route: PlannedRoute, outcome: "summit" | "abandoned"): Promise<Delivery>;

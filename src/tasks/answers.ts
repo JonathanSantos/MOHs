@@ -1,4 +1,4 @@
-import { SCOUT_HARDNESS, SEVERITIES } from "../domain/types.ts";
+import { INTENTS, SCOUT_HARDNESS, SEVERITIES } from "../domain/types.ts";
 import { z } from "../util/zod.ts";
 
 /** One structured answer that ends a task. Whoever the agent is, the Basecamp validates it against the schema. */
@@ -61,6 +61,45 @@ function hasCycle(routes: readonly { id: string; after?: string[] }[]): boolean 
 
 const plural = (n: number, word: string, many = `${word}s`) => `${n} ${n === 1 ? word : many}`;
 
+/** A point the request leaves open: two or three answers, the recommended one first, each with why. */
+const decisionSchema = z.strictObject({
+  question: z.string().min(3).max(200).describe("o que o pedido não decide, como pergunta"),
+  when: z.string().min(3).max(200).optional().describe("a situação, para virar cenário: o QUANDO (sem a palavra); cada opção é o ENTÃO"),
+  options: z
+    .array(
+      z.strictObject({
+        choice: z.string().min(1).max(200).describe("a resposta"),
+        why: z.string().min(3).max(200).describe("por que, com base no pedido e no projeto"),
+      }),
+    )
+    .min(2)
+    .max(3)
+    .describe("de 2 a 3 respostas, a recomendada primeiro"),
+  against: z
+    .string()
+    .min(3)
+    .max(200)
+    .optional()
+    .describe("só se a recomendada contraria algo que o pedido diz: o trecho do pedido, copiado"),
+});
+
+const decisionsField = z
+  .array(decisionSchema)
+  .max(5)
+  .optional()
+  .describe("os pontos que o pedido não decide, cada um com opções; o Basecamp os junta à line");
+
+const EXAMPLE_DECISIONS = [
+  {
+    question: "O que greet() devolve com um nome vazio?",
+    when: 'alguém chama greet("")',
+    options: [
+      { choice: 'só "oi"', why: "o pedido não fala de nome, e o app hoje não passa nenhum" },
+      { choice: "lança um erro", why: "deixa o erro de quem chama visível" },
+    ],
+  },
+];
+
 /** Every answer a task can end with, keyed by the name the agent calls. */
 export const ANSWERS = {
   plan: defineAnswer({
@@ -68,8 +107,15 @@ export const ANSWERS = {
     schema: z
       .strictObject({
         reason: z.string().min(3).describe("por que essa hardness, em uma frase"),
+        intent: z
+          .enum(INTENTS)
+          .optional()
+          .describe(
+            "o que o pedido pede: fix (bug), feature (em código que existe), refactor (sem mudar comportamento) ou new (código novo)",
+          ),
         routes: z.array(routeSchema).min(1).max(6),
         line: z.string().min(40).optional().describe("só quando todas as routes são fluorite: a line, e o climb pula o setter"),
+        decisions: decisionsField,
       })
       .superRefine(({ routes }, context) => {
         const ids = new Set(routes.map((route) => route.id));
@@ -88,6 +134,7 @@ export const ANSWERS = {
       }),
     example: {
       reason: "troca de texto em um componente, sem área sensível",
+      intent: "feature",
       line: '# Line · Saudação curta\n\nQUANDO alguém chama greet() ENTÃO recebe "oi".\n\nFora: traduções.',
       routes: [
         {
@@ -111,10 +158,11 @@ export const ANSWERS = {
   }),
 
   line: defineAnswer({
-    description: "Entrega a line (spec) em Markdown, pronta para um humano revisar e assinar.",
-    schema: z.strictObject({ text: z.string().min(40) }),
+    description:
+      "Entrega a line (spec) em Markdown e, à parte, as decisões que o pedido deixa em aberto, cada uma com opções: o humano escolhe ao assinar.",
+    schema: z.strictObject({ text: z.string().min(40), decisions: decisionsField }),
     textField: "text",
-    example: { text: '# Line\n\nQUANDO alguém chama greet() ENTÃO recebe "oi".' },
+    example: { text: '# Line\n\nQUANDO alguém chama greet() ENTÃO recebe "oi".', decisions: EXAMPLE_DECISIONS },
     summarize: ({ text }) => `${plural(text.trim().split("\n").length, "linha")} gravadas; confira com mohs line`,
   }),
 
@@ -122,6 +170,11 @@ export const ANSWERS = {
     description: "Pitch concluído. Diga o que fez, não que passou: as checagens o Basecamp roda em seguida.",
     schema: z.strictObject({
       summary: z.string().min(3).max(280).describe("o que foi feito, em até 280 caracteres"),
+      repro: z
+        .array(z.string().min(1))
+        .max(3)
+        .optional()
+        .describe("numa correção de bug: os arquivos de teste que você criou e que reproduzem o bug (falham sem a correção)"),
       notes: z.string().max(280).optional().describe("o que você notou fora do escopo e não mudou"),
       decisions: z
         .array(z.string().min(3).max(200))
@@ -132,7 +185,7 @@ export const ANSWERS = {
     textField: "summary",
     placeholder: "o que foi feito, até 280 caracteres",
     example: { summary: "greet() agora devolve oi; teste ajustado" },
-    hint: 'Notou algo fora do escopo (um bug antigo, um risco) e não mudou? Conte em JSON: {"summary": "…", "notes": "…"}. Numa correção talc, as escolhas que o pedido não deixou claras vão em "decisions": ["…"].',
+    hint: 'Notou algo fora do escopo (um bug antigo, um risco) e não mudou? Conte em JSON: {"summary": "…", "notes": "…"}. Cada escolha de comportamento que a line (ou, numa correção talc, o pedido) não decide vai em "decisions": ["…"]; o humano as lê e assina com a entrega.',
     summarize: ({ summary, notes, decisions }) =>
       `resumo com ${summary.length}/280 caracteres${notes ? " e uma nota" : ""}${decisions?.length ? ` e ${plural(decisions.length, "decisão", "decisões")}` : ""}`,
   }),
@@ -230,6 +283,24 @@ export const ANSWERS = {
       const tests = files.filter((file) => file.kind !== "support").length;
       return `${plural(tests, "arquivo")} de teste selado${tests === 1 ? "" : "s"}${tests < files.length ? ` e ${files.length - tests} de apoio` : ""}`;
     },
+  }),
+
+  repro: defineAnswer({
+    description:
+      "Entrega o teste que reproduz o bug: os arquivos que você criou no diretório da tarefa, que falham hoje pelo motivo do bug.",
+    schema: z.strictObject({
+      files: z
+        .array(z.strictObject({ path: z.string().min(1).describe("relativo ao diretório da tarefa; um arquivo novo") }))
+        .min(1)
+        .max(3),
+      shows: z.string().min(3).max(280).describe("o que o teste mostra falhando hoje, em comportamento observável"),
+    }),
+    example: {
+      files: [{ path: "test/repro-titulo-vazio.test.js" }],
+      shows: "renomear com título só de espaços aceita e grava string vazia",
+    },
+    hint: "O Basecamp roda cada arquivo no código de hoje e confere que ele falha; depois, o climber o vê e ele roda no send. No fim, ele entra no projeto como teste de regressão.",
+    summarize: ({ files, shows }) => `${plural(files.length, "arquivo")} de reprodução: ${shows.slice(0, 80)}`,
   }),
 
   fall: defineAnswer({

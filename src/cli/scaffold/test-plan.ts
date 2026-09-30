@@ -48,6 +48,12 @@ export const TEST_OPTIONS = {
     why: "testa componentes React com DOM (cada arquivo pede jsdom com // @vitest-environment jsdom)",
   },
   jest: { id: "jest", label: "jest", seal: "npx jest {file}", why: "o runner que o projeto já usa" },
+  "project-script": {
+    id: "project-script",
+    label: "o script de teste do projeto (npm test)",
+    seal: "npm test -- {file}",
+    why: "o projeto roda os testes por um script próprio; um arquivo passa pelo mesmo caminho",
+  },
   mocha: { id: "mocha", label: "mocha", seal: "npx mocha {file}", why: "o runner que o projeto já usa" },
   pytest: {
     id: "pytest",
@@ -80,6 +86,12 @@ const NODE_RUNNERS: readonly { uses: (facts: StackFacts) => boolean; option: Tes
   { uses: ({ testScript }) => /\bnode\b.*--test\b/.test(testScript), option: TEST_OPTIONS["node-test"] },
 ];
 
+/** A test script that calls something other than a runner directly: the project's own way of running tests. */
+function isWrapper(testScript: string): boolean {
+  const script = testScript.replace(/^(?:\w+=\S*\s+|cross-env\s+(?:\w+=\S*\s+)*)*/, "").trim();
+  return Boolean(script) && !/^(?:npx\s+)?(?:jest|vitest|mocha|node\s+--test)\b/.test(script);
+}
+
 /** Stacks in order; the first that matches plans the tests. */
 const STACKS: readonly { matches: (facts: StackFacts) => boolean; plan: (facts: StackFacts) => Omit<TestPlan, "testFiles" | "e2e"> }[] = [
   {
@@ -87,7 +99,9 @@ const STACKS: readonly { matches: (facts: StackFacts) => boolean; plan: (facts: 
     plan: (facts) => {
       const react = facts.dependencies.has("react");
       const stack = react ? "Node + React" : "Node";
-      const runner = NODE_RUNNERS.find((candidate) => candidate.uses(facts))?.option;
+      const found = NODE_RUNNERS.find((candidate) => candidate.uses(facts))?.option;
+      // Um npm test que é um script próprio (node ./scripts/jest/jest-cli.js) configura o runner do jeito dele.
+      const runner = found && isWrapper(facts.testScript) ? TEST_OPTIONS["project-script"] : found;
       if (runner) return { stack, current: runner, recommended: runner, alternatives: [] };
       const builtIn = TEST_OPTIONS["node-test"];
       return react

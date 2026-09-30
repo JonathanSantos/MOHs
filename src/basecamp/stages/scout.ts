@@ -17,18 +17,25 @@ export const scoutStage: Stage = {
     }
     if (forcedHardness === "talc") return planTalc(session);
     journal.record("scout.started", {}, { actor: "scout" });
-    const scouted = await climbLevelWork(session, "scout", () => crew.scout(session.request, survey, { observer: session.observerFor() }));
+    const scouted = await climbLevelWork(session, "scout", () =>
+      crew.scout(session.request, survey, { observer: session.observerFor(), solo: session.solo }),
+    );
     const routes = scouted.routes.map((route) => (forcedHardness ? { ...route, hardness: forcedHardness } : route));
     const forced = scouted.routes.filter((route) => forcedHardness && route.hardness !== forcedHardness);
     const hardnessBudget = config.settings.hardness;
 
     const hardness = maxHardness(routes.map((route) => route.hardness));
-    session.plan = { kind: survey.kind, hardness, routes, line: hardness === "fluorite" ? scouted.line : undefined };
+    // A line do scout vale em fluorite e, no solo, em qualquer hardness: o mesmo agente escreveria a do setter.
+    const keepsLine = hardness === "fluorite" || session.solo;
+    const scoutLine = keepsLine ? { line: scouted.line, decisions: scouted.line ? scouted.decisions : undefined } : {};
+    const intent = scouted.intent ?? "feature";
+    session.plan = { kind: survey.kind, hardness, intent, routes, ...scoutLine };
     journal.record(
       "scout.hardness",
       {
         kind: survey.kind,
         hardness: session.plan.hardness,
+        intent,
         reason: scouted.reason,
         budget: routes.reduce((sum, route) => sum + hardnessBudget[route.hardness].o2, 0),
         routes: routes.map((route) => ({ ...route, budget: hardnessBudget[route.hardness].o2 })),

@@ -1,6 +1,7 @@
 import { join, relative } from "node:path";
 import { surveyRepository } from "../../survey/survey.ts";
 import { listDir, readText } from "../../util/fs.ts";
+import { workspacePackages } from "../../workspace/worktrees.ts";
 import { planTests, TEST_OPTIONS, type TestOptionId, type TestPlan } from "./test-plan.ts";
 
 export interface ProjectProfile {
@@ -14,6 +15,8 @@ export interface ProjectProfile {
   dev?: string;
   guidebooks: string[];
   workspaces: string[];
+  /** A monorepo (workspaces): checks are scoped to the packages each change touches. */
+  monorepo: boolean;
 }
 
 interface PackageJson {
@@ -66,18 +69,31 @@ export function detectProject(projectRoot: string, chosen?: TestOptionId): Proje
   const pick = chosen ? TEST_OPTIONS[chosen] : undefined;
   const e2e = pick?.id === "playwright" ? pick : tests.e2e?.current;
 
+  // Num monorepo, lint e testes da raiz cobrem o repositório inteiro: a anchor roda só os pacotes que o pitch tocou.
+  const monorepo = workspacePackages(projectRoot).length > 0 && "test" in scripts;
+  const scopedTest = /\bturbo\b/.test(scripts.test ?? "")
+    ? "npx turbo run test {filters}"
+    : readText(join(projectRoot, "pnpm-lock.yaml")) !== null
+      ? "pnpm {filters} test"
+      : "npm test -- {packages}";
   return {
     tests,
-    anchor: ANCHOR_SCRIPTS.map(firstPresent)
-      .filter((s): s is string => Boolean(s))
-      .map(run),
+    monorepo,
+    anchor: monorepo
+      ? [scopedTest]
+      : ANCHOR_SCRIPTS.map(firstPresent)
+          .filter((s): s is string => Boolean(s))
+          .map(run),
     send: [firstPresent(SEND_SCRIPTS)].filter((s): s is string => Boolean(s)).map(run),
     seal: (pick && pick.id !== "playwright" ? pick : tests.current)?.seal,
     sealE2e: e2e?.seal,
     dev: "dev" in scripts ? "npm run dev" : undefined,
-    guidebooks: Object.entries(GUIDEBOOK_BY_DEPENDENCY)
-      .filter(([dependency]) => dependencies.has(dependency))
-      .map(([, guidebook]) => guidebook),
+    guidebooks: [
+      ...Object.entries(GUIDEBOOK_BY_DEPENDENCY)
+        .filter(([dependency]) => dependencies.has(dependency))
+        .map(([, guidebook]) => guidebook),
+      ...(monorepo ? ["mohs:monorepo"] : []),
+    ],
     workspaces: workspaces.map((w) => relative(projectRoot, w.dir)),
   };
 }

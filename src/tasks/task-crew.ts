@@ -1,4 +1,5 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { CEREMONIES } from "../domain/ceremony.ts";
 import { dirname, join, resolve } from "node:path";
 import type { RackItem, ResolvedConfig } from "../config/types.ts";
 import type {
@@ -9,10 +10,12 @@ import type {
   FallContext,
   FixResult,
   InspectContext,
+  LineContext,
   NotesContext,
   PitchContext,
   PitchOutcome,
   PitchResult,
+  ReproContext,
   SealContext,
   SealedFile,
   SendFailure,
@@ -49,7 +52,7 @@ type TaskRequest<N extends AnswerName> = Omit<TaskSpec<N>, "brief" | "assignment
 type PitchAnswer = (typeof CLIMBER_ANSWERS)[number] | (typeof TALC_ANSWERS)[number];
 
 const OUTCOMES: { [N in PitchAnswer]: (input: Answer<N>["input"]) => PitchOutcome } = {
-  safe: ({ summary, notes, decisions }) => ({ outcome: "safe", summary, note: notes, decisions }),
+  safe: ({ summary, notes, decisions, repro }) => ({ outcome: "safe", summary, note: notes, decisions, repro }),
   watch: ({ excerpt, question }) => ({ outcome: "watch", excerpt, question }),
   rock: ({ command, error }) => ({ outcome: "rock", command, error }),
   escalate: ({ reason }) => ({ outcome: "escalate", reason }),
@@ -84,7 +87,7 @@ export class TaskCrew implements Crew {
         title: "Planejar o climb: routes, pitches e hardness",
         cwd: this.options.config.projectRoot,
         access: "read",
-        pack: this.planningPack("scout", survey, scoutTask(request)),
+        pack: this.planningPack("scout", survey, scoutTask(request, context.solo)),
         answers: ["plan"],
       },
       context,
@@ -92,19 +95,58 @@ export class TaskCrew implements Crew {
     return { ...answer.input, o2 };
   }
 
-  async writeLine(request: string, routes: readonly PlannedRoute[], survey: SurveyResult, context: TaskContext) {
+  /**
+   * The reproducer writes a test that fails today because of the bug, in a throwaway checkout, and answers with the
+   * paths. A path that is missing or leaves the checkout sends the task back.
+   */
+  async reproduce(request: string, survey: SurveyResult, context: ReproContext) {
+    const { seal: command } = this.options.config.settings.commands;
+    const runnable = (path: string) => Boolean(command ?? builtInSealCommand(path));
+    let feedback = context.feedback;
+    for (let attempt = 1; ; attempt++) {
+      const { answer, o2 } = await this.assign(
+        {
+          role: "reproducer",
+          title: "Reproduzir o bug num teste que falha hoje",
+          attempt: context.attempt,
+          cwd: context.workspace.path,
+          access: "write",
+          pack: withFeedback(this.planningPack("reproducer", survey, reproTask(request, command)), feedback),
+          answers: ["repro"],
+          commands: command ? [command] : builtInSealCommands(),
+        },
+        context,
+      );
+      const read = readSealed(
+        context.workspace.path,
+        answer.input.files.map((file) => ({ path: file.path, kind: "unit" as const })),
+        runnable,
+      );
+      if (typeof read !== "string") return { files: read, shows: answer.input.shows, o2 };
+      if (attempt >= MAX_SEAL_ANSWERS) throw new Error(`reproducer answered ${attempt} times with unreadable files: ${read}`);
+      feedback = read;
+    }
+  }
+
+  async writeLine(request: string, routes: readonly PlannedRoute[], survey: SurveyResult, context: LineContext) {
     const { answer, o2 } = await this.assign(
       {
         role: "setter",
         title: "Escrever a line (spec) do climb",
         cwd: this.options.config.projectRoot,
         access: "read",
-        pack: this.planningPack("setter", survey, lineTask(request, routes), maxHardness(routes.map((route) => route.hardness))),
+        pack: this.planningPack(
+          "setter",
+          survey,
+          lineTask(request, routes, context),
+          maxHardness(routes.map((route) => route.hardness)),
+          context.solo,
+        ),
         answers: ["line"],
       },
       context,
     );
-    return { text: answer.input.text, o2 };
+    return { text: answer.input.text, decisions: answer.input.decisions, o2 };
   }
 
   async climbPitch(route: PlannedRoute, pitch: number, context: PitchContext): Promise<PitchResult> {
@@ -221,12 +263,17 @@ export class TaskCrew implements Crew {
       const { answer, o2 } = await this.assign(
         {
           role: "belayer",
-          title: `Testes selados da route ${route.id} (${route.name})`,
+          title: context.solo
+            ? `Testes da route ${route.id} (${route.name}), antes do código`
+            : `Testes selados da route ${route.id} (${route.name})`,
           route: route.id,
           attempt: context.attempt,
           cwd: context.workspace.path,
           access: "write",
-          pack: withFeedback(this.routePack("belayer", route, context.notes, sealTask(route, command, budget)), feedback),
+          pack: withFeedback(
+            this.routePack("belayer", route, context.notes, sealTask(route, command, budget, context.solo), context.solo),
+            feedback,
+          ),
           answers: ["seal"],
           files: [],
           commands: command ? [command] : builtInSealCommands(),
@@ -277,7 +324,7 @@ export class TaskCrew implements Crew {
         cwd: context.workspace.path,
         branch: context.workspace.branch,
         access: "read",
-        pack: this.routePack("inspector", route, context.notes, inspectTask(inspector, context.diff)),
+        pack: this.routePack("inspector", route, context.notes, inspectTask(inspector, context.diff, context.solo), context.solo),
         answers: ["report"],
         files: route.files,
       },
@@ -358,9 +405,10 @@ export class TaskCrew implements Crew {
   }
 
   /** The pack of a role that works on one route: its rules, rack and beta, plus the survey, line and bolts. */
-  private routePack(role: Role, route: PlannedRoute, notes: ClimbNotes, task: string): Pack {
+  private routePack(role: Role, route: PlannedRoute, notes: ClimbNotes, task: string, solo = false): Pack {
     return buildPack(this.options.config, {
       role,
+      solo,
       hardness: route.hardness,
       files: route.files,
       tags: route.tags,
@@ -372,8 +420,8 @@ export class TaskCrew implements Crew {
   }
 
   /** The scout plans before any hardness exists (quartz has no scout rules); the setter writes for the climb's hardness. */
-  private planningPack(role: Role, survey: SurveyResult, task: string, hardness: Hardness = "quartz"): Pack {
-    return buildPack(this.options.config, { role, hardness, files: [], tags: [], survey: survey.summary, task });
+  private planningPack(role: Role, survey: SurveyResult, task: string, hardness: Hardness = "quartz", solo = false): Pack {
+    return buildPack(this.options.config, { role, hardness, solo, files: [], tags: [], survey: survey.summary, task });
   }
 }
 
@@ -381,24 +429,33 @@ function toOutcome(answer: Answer<PitchAnswer>): PitchOutcome {
   return (OUTCOMES[answer.call] as (input: typeof answer.input) => PitchOutcome)(answer.input);
 }
 
-function scoutTask(request: string): string {
+function scoutTask(request: string, solo = false): string {
   return [
     `Pedido: ${request}`,
     "Explore o repositório o quanto precisar para planejar com arquivos reais. Não altere nada.",
-    "Prefira poucas routes e pitches pequenos. Use fluorite quando a mudança for pequena (até 3 arquivos) e não tocar autenticação, dados pessoais, pagamentos ou links públicos (URLs que dão acesso sem login).",
-    "Se todas as routes forem fluorite, escreva também a line no campo line do plano: curta, com o problema, os cenários QUANDO/ENTÃO e o que fica de fora. O humano a assina e o climb não precisa da tarefa do setter.",
+    "Diga em intent o que o pedido pede: fix (um bug: algo que devia funcionar e não funciona), feature (algo novo em código que já existe), refactor (mudar por dentro sem mudar o comportamento) ou new (código novo, sem nada em volta que dependa dele). Cada um traz as suas checagens: um fix começa por um teste que reproduz o bug.",
+    "Prefira poucas routes e pitches pequenos. A hardness mede o custo de um erro que passe, não o tamanho: fluorite quando um erro aparece logo e não quebra nada que existe; quartz quando custa caro ou demora a aparecer; diamond para autenticação, dados pessoais, pagamentos, migrações e links públicos (URLs que dão acesso sem login).",
+    solo
+      ? "Neste climb solo, escreva também a line no campo line do plano, qualquer que seja a hardness: o problema, os cenários QUANDO/ENTÃO, a interface pública que muda (assinaturas, rotas, props) e o que fica de fora, com as decisões em decisions. O humano a assina e o climb não precisa da tarefa do setter."
+      : "Se todas as routes forem fluorite, escreva também a line no campo line do plano: curta, com o problema, os cenários QUANDO/ENTÃO e o que fica de fora. O humano a assina e o climb não precisa da tarefa do setter.",
     "Se uma route usa o que outra cria, declare after com o id dela: ela sobe depois, partindo do resultado. No fim, o Basecamp junta todas as routes numa entrega e testa tudo junto.",
   ].join("\n\n");
 }
 
-function lineTask(request: string, routes: readonly PlannedRoute[]): string {
+function lineTask(request: string, routes: readonly PlannedRoute[], { intent, repro, solo }: Partial<LineContext> = {}): string {
   const plan = routes
     .map((route) => `- ${route.id} ${route.name} (${route.hardness}): ${route.pitches.map((p) => p.title).join("; ")}`)
     .join("\n");
   return [
     `Pedido: ${request}`,
     `Plano do scout:\n${plan}`,
+    ...(intent ? [CEREMONIES[intent].setter] : []),
+    ...(repro ? [`Teste que reproduz o bug (falha hoje):\n${repro}`] : []),
+    ...(solo
+      ? ["Neste climb solo não há bolts: descreva na line a interface pública que muda (assinaturas, rotas, props, data-testid)."]
+      : []),
     "Escreva a line deste climb. Curta: uma pessoa precisa conseguir revisar e assinar em poucos minutos. Não altere nenhum arquivo.",
+    'O que o pedido não decide vai em "decisions", com 2 a 3 respostas e a recomendada primeiro, e não no texto: o humano escolhe ao assinar. A recomendada segue o que o pedido diz; se contrariar algo dele, copie o trecho em "against".',
     ...(routes.length > 1
       ? [
           "Agrupe os cenários por route, com um título por route (por exemplo ### A. Nome da route): o belayer de cada route escreve os testes da sua seção.",
@@ -422,22 +479,38 @@ function sealBudget(route: PlannedRoute, line: string | undefined, perScenario: 
   return { cases, text: `${scenarios || 1} cenário(s) da route na line × ${perScenario} por cenário` };
 }
 
-function sealTask(route: PlannedRoute, command: string | undefined, budget: { cases: number; text: string }): string {
+function sealTask(route: PlannedRoute, command: string | undefined, budget: { cases: number; text: string }, solo = false): string {
   const after = route.after?.length
     ? [
         `Esta route parte do resultado de ${route.after.join(", ")}, que ainda não está no código deste diretório. Escreva contra a interface dos bolts (inclusive os herdados, na seção Bolts) e use o código real, sem imitar essas routes com dublês.`,
       ]
     : [];
   return [
-    `Escreva os testes selados da route ${route.id} (${route.name}). Cada cenário QUANDO/ENTÃO desta route na line vira pelo menos um teste, usando só a interface dos bolts.`,
-    `Teto: até ${budget.cases} casos de teste no total (${budget.text}). Um caso por comportamento; variações do mesmo comportamento cabem num caso só. O teto é para caber no tempo: o climber só vê as falhas, então dez casos da mesma regra não ajudam mais que um.`,
+    solo
+      ? `Escreva os testes da route ${route.id} (${route.name}) antes de qualquer código (TDD). Cada cenário QUANDO/ENTÃO desta route na line vira pelo menos um teste, usando a interface que a line (ou os bolts, quando houver) descreve. Quem implementa é você mesmo, então os casos que você não imaginar agora ninguém vai testar: leia antes os testes que o projeto já tem para o que fica perto (o mesmo arquivo de testes, os construtos parecidos) e espelhe cada tipo de caso deles no que a line muda; depois acrescente os que quebrariam uma implementação ingênua.`
+      : `Escreva os testes selados da route ${route.id} (${route.name}). Cada cenário QUANDO/ENTÃO desta route na line vira pelo menos um teste, usando só a interface dos bolts.`,
+    `Teto: até ${budget.cases} casos de teste no total (${budget.text}). Um caso por comportamento; variações do mesmo comportamento cabem num caso só.${solo ? "" : " O teto é para caber no tempo: o climber só vê as falhas, então dez casos da mesma regra não ajudam mais que um."}`,
     ...after,
     `O diretório da tarefa é um checkout descartável do código atual. Crie arquivos novos de teste com a route no nome (por exemplo test/sealed/${route.id}-<assunto>.test.js) e não altere os existentes.`,
     "Cada teste precisa falhar pelo motivo certo: um teste que falha só porque a função ainda não existe (TypeError) não prova o comportamento. Cheque o resultado, a mensagem ou o código de erro esperado.",
     command
       ? `Rode cada arquivo com ${command}: todos precisam falhar agora, porque a implementação ainda não existe.`
       : `O projeto não diz como rodar um teste (commands.seal), então cada arquivo roda pela extensão, sem dependência: ${describeBuiltInSeal()}. Um arquivo passa quando o processo termina com código 0: use node:test (ou unittest), ou um script que sai com erro quando o resultado está errado. Rode cada um assim: todos precisam falhar agora, porque a implementação ainda não existe.`,
-    "Faça esta tarefa num contexto isolado (um subagente novo, se você orquestra outros): quem implementa não pode ver estes testes.",
+    solo
+      ? "O Basecamp guarda uma cópia destes testes e a trava: na tarefa de climber você os verá, mas mudá-los no worktree não muda o que roda no send. Para discordar de um teste depois, responda dispute com o trecho da line."
+      : "Faça esta tarefa num contexto isolado (um subagente novo, se você orquestra outros): quem implementa não pode ver estes testes.",
+  ].join("\n\n");
+}
+
+function reproTask(request: string, command: string | undefined): string {
+  return [
+    `Pedido: ${request}`,
+    "Este pedido é a correção de um bug. Antes de qualquer plano, reproduza o bug num teste: um arquivo novo que falha hoje pelo motivo do bug, e que vai passar quando ele for corrigido. O diretório da tarefa é um checkout descartável do código como está.",
+    "Siga a forma dos testes que o projeto já tem para o que fica perto (mesmo runner, mesmos helpers, mesmo lugar), num arquivo novo com o bug no nome. Teste o comportamento que o pedido descreve, não detalhes de implementação, e cheque o resultado, a mensagem ou o erro esperado: um teste que falha por um erro de importação não reproduz nada.",
+    command
+      ? `Rode cada arquivo com ${command}: ele precisa falhar agora.`
+      : `Cada arquivo roda pela extensão (${describeBuiltInSeal()}) e precisa falhar agora.`,
+    "Não corrija o bug: só o reproduza. O teste fica visível para quem vai corrigir e entra no projeto como teste de regressão.",
   ].join("\n\n");
 }
 
@@ -479,12 +552,17 @@ function fallTask(failures: readonly SendFailure[], sealed: readonly SealedFile[
   return parts.join("\n\n");
 }
 
-function inspectTask(inspector: RackItem, diff: string): string {
+function inspectTask(inspector: RackItem, diff: string, solo = false): string {
   return [
     `Inspection ${inspector.name}: ${inspector.description}`,
     `Rubrica:\n${inspector.body.trim()}`,
     `Diff da route, com o número de cada linha no arquivo (+ entrou, - saiu):\n${fence(reviewDiff(diff, { tests: !!inspector.tests }))}`,
     "Revise só o diff, com esta rubrica, e cite cada achado como arquivo:linha com os números à esquerda. O diretório da tarefa é o worktree da route, se precisar ler o contexto. Não altere nada.",
+    ...(solo
+      ? [
+          "Neste climb solo, você também escreveu este código e os testes dele: revise como se fosse de outra pessoa. Comece pelos casos que nenhum teste cobre: rode o código com os casos que a suíte do projeto já testa em construtos parecidos e com os que quebrariam uma implementação ingênua. Um caso sem teste que quebra é um achado high, com o caso e o resultado.",
+        ]
+      : []),
   ].join("\n\n");
 }
 

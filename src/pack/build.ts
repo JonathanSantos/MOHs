@@ -11,7 +11,7 @@ import { estimateTokens } from "../util/o2.ts";
 import { hardnessRules } from "./rules.ts";
 
 export type SectionKind =
-  "core" | "hardness" | "skills" | "skill-index" | "beta" | "croqui" | "survey" | "bolts" | "line" | "task" | "call";
+  "core" | "hardness" | "skills" | "skill-index" | "beta" | "croqui" | "survey" | "bolts" | "line" | "repro" | "tests" | "task" | "call";
 
 /** Roles that plan the climb read the whole croqui; the others, the parts near their files. */
 const PLANNING_ROLES: ReadonlySet<Role> = new Set(["scout", "setter"]);
@@ -39,6 +39,12 @@ export interface PackRequest extends RackQuery {
   survey?: string;
   bolts?: string;
   line?: string;
+  /** The route's tests, in a solo climb: written first, visible, and locked by the Basecamp. */
+  tests?: string;
+  /** The test that reproduces the bug (intent fix), which the send runs. */
+  repro?: string;
+  /** One agent plays every role: the hardness rules speak of locked tests instead of sealed ones. */
+  solo?: boolean;
   task?: string;
   lastCall?: string;
 }
@@ -51,7 +57,7 @@ export function buildPack(config: ResolvedConfig, request: PackRequest, rolesDir
   const sections = new SectionList();
   const coreFile = join(rolesDir, `${request.role}.md`);
   sections.add("core", `Papel: ${request.role}`, readText(coreFile), [coreFile]);
-  sections.add("hardness", `Hardness: ${request.hardness}`, hardnessRules(request.hardness, request.role));
+  sections.add("hardness", `Hardness: ${request.hardness}`, hardnessRules(request.hardness, request.role, request.solo));
 
   const rack = selectSkills(config, request);
   for (const { item } of rack.included) sections.add("skills", `Skill: ${item.name}`, item.body, [item.file]);
@@ -76,6 +82,8 @@ export function buildPack(config: ResolvedConfig, request: PackRequest, rolesDir
   sections.add("survey", "Survey", request.survey);
   sections.add("bolts", "Bolts", request.bolts);
   sections.add("line", "Line", request.line);
+  sections.add("repro", "Teste que reproduz o bug (falha hoje; o Basecamp o roda no send e o adota no fim)", request.repro);
+  sections.add("tests", "Testes da route (travados: o Basecamp roda a cópia dele no send)", request.tests);
   sections.add("task", "Pitch", request.task);
   sections.add("call", "Última call", request.lastCall);
 

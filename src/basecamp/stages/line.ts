@@ -1,3 +1,5 @@
+import { checkAgainst, numberDecisions, reviewLine } from "../../domain/decisions.ts";
+import { reproText } from "../route-climber.ts";
 import { sha256, writeText } from "../../util/fs.ts";
 import type { ClimbSession } from "../session.ts";
 import { climbLevelWork } from "./crew-errors.ts";
@@ -19,12 +21,24 @@ export const lineStage: Stage = {
     const author = session.plan.line ? "scout" : "setter";
     journal.record("line.started", {}, { actor: author });
     const line = session.plan.line
-      ? { text: session.plan.line, o2: 0 }
+      ? { text: session.plan.line, decisions: session.plan.decisions, o2: 0 }
       : await climbLevelWork(session, "setter", () =>
-          crew.writeLine(session.request, session.plan.routes, session.survey, { observer: session.observerFor() }),
+          crew.writeLine(session.request, session.plan.routes, session.survey, {
+            observer: session.observerFor(),
+            solo: session.solo,
+            intent: session.plan.intent,
+            repro: session.repro ? reproText(session.repro.files, session.repro.shows) : undefined,
+          }),
         );
-    writeText(session.paths.line, line.text);
-    journal.record("line.drafted", { hash: sha256(line.text), text: line.text }, { actor: author, o2: line.o2 });
+    // As decisões vêm à parte: o humano as lê com as opções e escolhe ao assinar.
+    const { decisions, dropped } = checkAgainst(numberDecisions(line.decisions ?? []), session.request);
+    if (dropped.length) {
+      journal.friction("spec.ambiguity", `aviso de "contraria o pedido" sem trecho do pedido, descartado: ${dropped.join(", ")}`);
+    }
+    const text = reviewLine(line.text, decisions);
+    writeText(session.paths.line, text);
+    const structured = decisions.length ? { body: line.text, decisions } : {};
+    journal.record("line.drafted", { hash: sha256(text), text, ...structured }, { actor: author, o2: line.o2 });
     await gate.awaitLineSignature();
   },
 };

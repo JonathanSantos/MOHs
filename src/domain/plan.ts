@@ -30,3 +30,10 @@ export function isRigged(route: Pick<PlannedRoute, "hardness">): boolean {
 export function describeWindows(windows: readonly (readonly string[])[]): string {
   return windows.map((window) => window.join(" + ")).join(" → ");
 }
+
+/** What a route waits for (`route.waiting`): the routes it starts from, or its own seal before the send. */
+export function describeWait(waitsFor: readonly string[]): string {
+  return waitsFor.includes("seal")
+    ? "esperando o belayer terminar o seal para o send"
+    : `esperando ${waitsFor.join(", ")} entrar na entrega`;
+}

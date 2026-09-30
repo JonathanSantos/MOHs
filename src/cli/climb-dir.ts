@@ -1,11 +1,11 @@
-import { climbDir, listClimbIds } from "../basecamp/event-log.ts";
+import { climbDir, latestClimbId } from "../basecamp/event-log.ts";
 import { mohsDirOf } from "../config/paths.ts";
 import { isDir } from "../util/fs.ts";
 
-/** Folder of the given climb, or of the most recent one (ids sort chronologically). */
+/** Folder of the given climb, or of the one that started last. */
 export function resolveClimbDir(projectRoot: string, climbId?: string): string | null {
   const mohsDir = mohsDirOf(projectRoot);
-  const id = climbId ?? listClimbIds(mohsDir).sort().at(-1);
+  const id = climbId ?? latestClimbId(mohsDir);
   if (!id) return null;
   const dir = climbDir(mohsDir, id);
   return isDir(dir) ? dir : null;

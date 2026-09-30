@@ -15,11 +15,13 @@ import {
   type PitchContext,
   type PitchResult,
   type RouteWorkspace,
+  type SealedFile,
   type SendFailure,
 } from "../crew/types.ts";
 import type { EventPayloads, EventType } from "../domain/events.ts";
 import { isRigged, type PlannedPitch, type PlannedRoute } from "../domain/plan.ts";
 import type { ClassifiedFinding, FixReason, FrictionKind, Hardness } from "../domain/types.ts";
+import { CEREMONIES } from "../domain/ceremony.ts";
 import { gradeEvidence, type Evidence } from "../domain/evidence.ts";
 import type { CheckDefinition } from "../index.ts";
 import { buildPack, summarizePack, type Pack } from "../pack/build.ts";
@@ -27,8 +29,9 @@ import { diffStats } from "../pack/review-diff.ts";
 import { findLeaks } from "../guards/leak.ts";
 import { selectInspectors } from "../rack/select.ts";
 import { matchGlob } from "../util/glob.ts";
-import { isTestPath } from "../util/paths.ts";
+import { isDocPath, isTestPath } from "../util/paths.ts";
 import { explainFall } from "./fall.ts";
+import type { PendingSeal } from "./ascent.ts";
 import type { RouteProgress } from "./resume.ts";
 import { ClimbAborted, ClimbEscalated, type ClimbSession } from "./session.ts";
 
@@ -36,9 +39,17 @@ const MAX_ANCHOR_ATTEMPTS = 3;
 
 /**
  * Summits a human signs. Diamond, because it is sensitive; talc, because nobody signed a line before the work: the
- * human reads the diff and the climber's decisions together, once, at the end.
+ * human reads the diff and the climber's decisions together, once, at the end. Any other route whose climber decided
+ * something the line did not is signed too, with those decisions: a behavior nobody chose must not ship unseen.
  */
 const SIGNED_SUMMIT: ReadonlySet<Hardness> = new Set(["talc", "diamond"]);
+
+/** Where a route starts from: an earlier run's progress, a seal still being written, a workspace already prepared. */
+export interface RouteStart {
+  progress?: RouteProgress;
+  seal?: PendingSeal;
+  workspace?: Promise<RouteWorkspace>;
+}
 
 /** Control-flow signal: a human abandoned this route. Only this route stops; the climb goes on. */
 class RouteAbandoned extends Error {}
@@ -62,10 +73,22 @@ export class RouteClimber {
 
   /** Where an earlier run of the climb left this route: the climb goes on from the first pitch without an anchor. */
   private readonly fromPitch: number;
+  /** The seal its belayer is still writing, when it is written alongside the climb. */
+  private readonly seal?: PendingSeal;
+  /** The workspace the Basecamp already prepared, so the climber's task opens right after the belayer's. */
+  private readonly prepared?: Promise<RouteWorkspace>;
+  /** The bug's reproduction, on the first route of a fix: the climber sees it, the send runs it, the summit adopts it. */
+  private readonly repro?: SealedFile[];
+  /** The climber's own reproduction (talc), checked against the base: counts as evidence when it holds. */
+  private reproChecked = 0;
+  private pendingRepro?: string[];
 
-  constructor(session: ClimbSession, route: PlannedRoute, progress?: RouteProgress) {
+  constructor(session: ClimbSession, route: PlannedRoute, { progress, seal, workspace }: RouteStart = {}) {
     this.session = session;
     this.route = route;
+    this.seal = seal;
+    this.prepared = workspace;
+    this.repro = route.id === session.plan.routes[0]?.id ? session.repro?.files : undefined;
     const done = progress?.anchored ?? new Set<number>();
     this.fromPitch = route.pitches.findIndex((_, i) => !done.has(i + 1)) + 1 || route.pitches.length + 1;
     for (const file of progress?.touched ?? []) this.touched.add(file);
@@ -74,14 +97,16 @@ export class RouteClimber {
 
   /** Returns true when the route reached the summit, false when a human abandoned it. */
   async climb(): Promise<boolean> {
-    this.workspace = await this.session.runner.prepare(this.route);
+    this.workspace = await (this.prepared ?? this.session.runner.prepare(this.route));
     this.record("route.started", { workspace: this.workspace.path, branch: this.workspace.branch });
+    if (this.repro) this.session.runner.setRepro?.(this.route, this.repro);
     try {
       for (let n = this.fromPitch; n <= this.route.pitches.length; n++) await this.climbPitch(n);
       if (this.route.hardness === "talc") await this.checkTalcBounds();
-      if (isRigged(this.route)) await this.sendUntilClean();
+      if (this.sends) await this.sendUntilClean();
       await this.inspect();
-      if (SIGNED_SUMMIT.has(this.route.hardness)) await this.signSummit();
+      await this.adoptRepro();
+      if (SIGNED_SUMMIT.has(this.route.hardness) || this.decisions.length) await this.signSummit();
       const delivery = await this.session.runner.finish(this.route, "summit");
       this.record("route.summit", { ms: Date.now() - this.startedAt, ...delivery, evidence: this.evidence() });
       return true;
@@ -156,14 +181,16 @@ export class RouteClimber {
         if (result.rock) this.reportRock(result.rock, n);
         if (result.note) this.friction("crew.note", result.note, n);
         if (result.decisions?.length) {
-          this.decisions = result.decisions;
-          this.record("decisions.taken", { decisions: result.decisions }, n);
+          // As decisões de todos os pitches somam: o humano assina o conjunto no fim.
+          this.decisions = [...new Set([...this.decisions, ...result.decisions])];
+          this.record("decisions.taken", { decisions: this.decisions }, n);
         }
         journal.call(
           { call: "SAFE", from: this.climber, to: "basecamp", route: this.route.id, pitch: n, summary: result.summary.slice(0, 280) },
           { o2: result.o2 },
         );
         this.session.checkO2();
+        if (result.repro?.length) this.pendingRepro = result.repro;
         return undefined;
 
       case "watch": {
@@ -218,6 +245,13 @@ export class RouteClimber {
     this.record("pitch.anchor", { commit: result.commit, checks: result.checks, fix, files: result.files }, n);
     for (const file of result.files ?? []) this.touched.add(file);
     this.checkScope(result.files ?? [], n, fix);
+    const changedTests = await this.changedOldTests();
+    if (changedTests.length) {
+      const output = `Refatoração: os testes que já existiam são a prova de que nada mudou por fora, e eles não podem mudar. Restaure: ${changedTests.join(", ")}.`;
+      this.friction("tests.changed", output, n);
+      return { ok: false, checks: result.checks, output };
+    }
+    await this.checkClimberRepro(n);
     return result;
   }
 
@@ -243,6 +277,9 @@ export class RouteClimber {
       survey: survey.summary,
       line: view.line?.text,
       bolts: isRigged(this.route) ? this.session.notes(this.route.id).bolts : undefined,
+      solo: this.session.solo,
+      tests: this.session.solo ? this.session.sealedCode.get(this.route.id) : undefined,
+      repro: this.repro ? reproText(this.repro, this.session.repro?.shows) : undefined,
       task:
         this.route.hardness === "talc"
           ? `Correção pequena (talc), sem plano nem line: você decide os arquivos.\n\nPedido: ${this.session.request}`
@@ -270,9 +307,48 @@ export class RouteClimber {
     }
   }
 
+  /** In a refactoring, the test files that existed before the route and that it modified, renamed or deleted. */
+  private async changedOldTests(): Promise<string[]> {
+    const intent = this.session.plan.intent;
+    if (!intent || !CEREMONIES[intent].keepTests || !this.session.runner.statusSinceBase) return [];
+    const changes = await this.session.runner.statusSinceBase(this.route);
+    return changes.filter((change) => change.status !== "A" && isTestPath(change.path)).map((change) => change.path);
+  }
+
+  /** The climber said which of its tests reproduce the bug: each must fail on the base and pass now. */
+  private async checkClimberRepro(n: number): Promise<void> {
+    const paths = this.pendingRepro;
+    this.pendingRepro = undefined;
+    if (!paths?.length || !this.session.runner.reproduces) return;
+    const files = await this.session.runner.reproduces(this.route, paths);
+    this.record("repro.verified", { files }, n);
+    this.reproChecked = files.filter((file) => file.failedBefore && file.passesNow).length;
+    const weak = files.filter((file) => !file.failedBefore).map((file) => file.path);
+    if (weak.length) this.friction("repro.green", `o teste que devia reproduzir o bug já passava antes da correção: ${weak.join(", ")}`, n);
+  }
+
   // ── send ───────────────────────────────────────────────────────────────
 
+  /** A rigged route is sent with its seal; the route of a fix also with the bug's reproduction, whatever its hardness. */
+  private get sends(): boolean {
+    return isRigged(this.route) || Boolean(this.repro?.length);
+  }
+
+  /** At the summit the reproduction joins the route as a regression test, so the project keeps the proof of the fix. */
+  private async adoptRepro(): Promise<void> {
+    if (!this.repro?.length || !this.session.runner.adoptTests) return;
+    const { adopted, skipped } = await this.session.runner.adoptTests(
+      this.route,
+      this.repro,
+      `mohs(${this.route.id}): teste de reprodução do bug`,
+    );
+    this.record("repro.adopted", { files: adopted, skipped });
+    for (const file of adopted) this.touched.add(file);
+  }
+
   private async sendUntilClean(): Promise<void> {
+    if (this.seal && !this.seal.done()) this.record("route.waiting", { for: ["seal"] });
+    await this.seal?.ready;
     let consecutiveFalls = 0;
     for (;;) {
       const fall = await this.send();
@@ -372,9 +448,14 @@ export class RouteClimber {
     return this.reportFall(result.failures);
   }
 
-  /** The belayer's explanation of the failures, sent to the climber as a FALL call. */
+  /**
+   * The belayer's explanation of the failures, sent to the climber as a FALL call. Solo, the climber already reads the
+   * tests, so the failures go to it as they are: nothing to keep secret, and no second task to explain them.
+   */
   private async reportFall(failures: SendFailure[]): Promise<FallReport> {
-    const report = await explainFall(this.session, this.route, failures, (work) => this.retrying(work));
+    // Solo, ou numa route sem belayer (só a reprodução rodou), a falha vai crua: não há segredo nem quem a explique.
+    const raw = this.session.solo || !isRigged(this.route);
+    const report = raw ? rawFall(failures) : await explainFall(this.session, this.route, failures, (work) => this.retrying(work));
     this.session.journal.call(
       {
         call: "FALL",
@@ -445,7 +526,7 @@ export class RouteClimber {
         blocking.map((f) => `${f.severity} · ${f.inspector}: ${f.text}`),
       );
       // Toda correção de inspection reabre o send: os testes selados rodam de novo.
-      if (isRigged(this.route)) await this.sendUntilClean();
+      if (this.sends) await this.sendUntilClean();
     }
   }
 
@@ -465,7 +546,13 @@ export class RouteClimber {
   private async inspectionRound(inspectors: RackItem[], round: number): Promise<ClassifiedFinding[]> {
     if (!inspectors.length) return [];
     const { crew, config, runner } = this.session;
-    const context = { notes: this.notes(), workspace: this.workspace, diff: await runner.diff(this.route), observer: this.observer() };
+    const context = {
+      notes: this.notes(),
+      workspace: this.workspace,
+      diff: await runner.diff(this.route),
+      solo: this.session.solo,
+      observer: this.observer(),
+    };
     const reports = await Promise.all(
       inspectors.map(async (inspector) => ({
         inspector,
@@ -499,7 +586,12 @@ export class RouteClimber {
       : "";
     await this.session.gate.awaitSignature({
       target: `summit-${this.route.id}`,
-      what: this.route.hardness === "talc" ? `A correção e as decisões do climber` : `A entrega da route ${this.route.id}`,
+      what:
+        this.route.hardness === "talc"
+          ? "A correção e as decisões do climber"
+          : this.decisions.length
+            ? `A entrega da route ${this.route.id} e as decisões do climber`
+            : `A entrega da route ${this.route.id}`,
       review: branch ? `a branch ${branch} (git diff HEAD...${branch})` : "o resultado no Lookout",
       text: `route ${this.route.id} · ${this.route.name}\ncommit ${head.slice(0, 12)}${branch ? `\nbranch ${branch}` : ""}${decisions}`,
       route: this.route.id,
@@ -515,7 +607,8 @@ export class RouteClimber {
     const { settings, croqui } = this.session.config;
     const { maxFiles, maxLines } = settings.talc;
     const sensitive = [...settings.talc.sensitive, ...(croqui?.sensitive.map((area) => area.glob) ?? [])];
-    const code = diffStats(await this.session.runner.diff(this.route)).filter((file) => !isTestPath(file.path));
+    // Testes e documentação não contam: uma correção com teste e nota no README continua pequena.
+    const code = diffStats(await this.session.runner.diff(this.route)).filter((file) => !isTestPath(file.path) && !isDocPath(file.path));
     const touchy = code.find((file) => sensitive.some((glob) => matchGlob(file.path, glob)));
     const lines = code.reduce((sum, file) => sum + file.added + file.removed, 0);
     const reason = touchy
@@ -536,6 +629,8 @@ export class RouteClimber {
     const added = [...this.touched].filter(isTestPath).length;
     return gradeEvidence({
       sealed: seal ? seal.unit + seal.e2e : 0,
+      locked: this.session.solo,
+      reproduced: (this.repro?.length ?? 0) + this.reproChecked,
       commands: [...new Set([...config.settings.commands.anchor, ...suite])],
       projectTests: (survey.tests ?? 0) + added,
       checks: this.checksRan.size,
@@ -581,4 +676,24 @@ export class RouteClimber {
   private friction(kind: FrictionKind, detail: string, pitch?: number, o2?: number): void {
     this.session.journal.friction(kind, detail, { route: this.route.id, pitch, o2 });
   }
+}
+
+/** A FALL straight from the failing tests, for a climber that already reads them (solo). */
+function rawFall(failures: readonly SendFailure[]): FallReport {
+  const MAX_OUTPUT = 600;
+  return {
+    o2: 0,
+    scenario: failures.map((failure) => failure.test).join(", "),
+    expected: "os testes travados da route passando",
+    actual: failures.map((failure) => `${failure.test}: ${failure.output.trim().slice(0, MAX_OUTPUT)}`).join("\n"),
+  };
+}
+
+/** The reproduction as the climber and the setter read it: what it shows, then each file. */
+export function reproText(files: readonly SealedFile[], shows?: string): string {
+  const fence = "```";
+  return [
+    ...(shows ? [`O que ele mostra: ${shows}`] : []),
+    ...files.map((file) => `### ${file.path}\n${fence}\n${file.content.trimEnd()}\n${fence}`),
+  ].join("\n\n");
 }

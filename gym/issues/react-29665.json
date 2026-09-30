@@ -1,0 +1,15 @@
+{
+  "id": "react-29665",
+  "keywords": ["react", "action", "state"],
+  "repo": "https://github.com/react/react.git",
+  "base": "1b0132c05^",
+  "reference": "1b0132c05",
+  "intent": "feature",
+  "request": "No repositório do React, faça a regra react-hooks/exhaustive-deps (packages/eslint-plugin-react-hooks) considerar estável o dispatch devolvido por useActionState (e React.useActionState), como já faz com o setState de useState e o dispatch de useReducer: ele não precisa estar nas dependências. Exemplo que não deve dar aviso:\n\nfunction MyComponent() {\n  const [state, dispatch] = useActionState();\n  useEffect(() => {\n    dispatch();\n  }, []);\n}\n\nO estado devolvido continua sendo uma dependência. Acrescente testes em packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js. Os testes do plugin rodam com: node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "hidden": {
+    "command": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js",
+    "files": ["packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js"]
+  },
+  "projectTest": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "source": ["https://github.com/react/react/pull/29665"]
+}

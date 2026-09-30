@@ -1,0 +1,19 @@
+{
+  "id": "react-25844",
+  "keywords": ["react", "deps", "as"],
+  "repo": "https://github.com/react/react.git",
+  "base": "a1433ca0b^",
+  "reference": "a1433ca0b",
+  "intent": "fix",
+  "request": "No repositório do React, corrija as issues #25844 e #20162: a regra react-hooks/exhaustive-deps (packages/eslint-plugin-react-hooks) não aceita um array de dependências com uma asserção de tipo do TypeScript. Exemplo:\n\nfunction App(props) {\n  React.useEffect(() => {\n    console.log(props.test);\n  }, [props.test] as const);\n}\n\nHoje a regra trata o array como se não fosse um array literal e reclama. O esperado é que [props.test] as const (ou as qualquer tipo) valha como o array [props.test]. Acrescente testes em packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js. Os testes do plugin rodam com: node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "hidden": {
+    "command": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js",
+    "files": ["packages/eslint-plugin-react-hooks/__tests__/ESLintRuleExhaustiveDeps-test.js"]
+  },
+  "projectTest": "node ./scripts/jest/jest-cli.js packages/eslint-plugin-react-hooks",
+  "source": [
+    "https://github.com/react/react/issues/25844",
+    "https://github.com/react/react/issues/20162",
+    "https://github.com/react/react/pull/28189"
+  ]
+}

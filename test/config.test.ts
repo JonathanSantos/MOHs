@@ -168,3 +168,30 @@ describe("mohs init detection", () => {
     assert.equal(detectProject(tempProject({ "go.mod": "module x\n" })).seal, undefined, "other stacks say it in commands.seal");
   });
 });
+
+describe("init in a monorepo", () => {
+  it("scopes the anchor to the packages a pitch touches, per package manager, and runs one test file through the project's script", () => {
+    const pkg = (test: string) => JSON.stringify({ workspaces: ["packages/*"], scripts: { test }, devDependencies: { jest: "29" } });
+    const npm = detectProject(tempProject({ "package.json": pkg("node ./scripts/jest/jest-cli.js"), "packages/a/package.json": "{}" }));
+    assert.deepEqual(npm.anchor, ["npm test -- {packages}"]);
+    assert.equal(npm.seal, "npm test -- {file}", "a test script of its own runs one file too");
+    assert.ok(npm.guidebooks.includes("mohs:monorepo"));
+    const turbo = detectProject(tempProject({ "package.json": pkg("turbo run test"), "packages/a/package.json": "{}" }));
+    assert.deepEqual(turbo.anchor, ["npx turbo run test {filters}"]);
+    const pnpm = detectProject(
+      tempProject({
+        "package.json": JSON.stringify({ scripts: { test: "pnpm -r test" } }),
+        "pnpm-workspace.yaml": "packages:\n  - 'apps/*'\n  - \"libs/core\"\n",
+        "pnpm-lock.yaml": "",
+        "apps/web/package.json": "{}",
+        "libs/core/package.json": "{}",
+      }),
+    );
+    assert.deepEqual(pnpm.anchor, ["pnpm {filters} test"]);
+    const plain = detectProject(
+      tempProject({ "package.json": JSON.stringify({ scripts: { test: "jest", lint: "eslint ." }, devDependencies: { jest: "29" } }) }),
+    );
+    assert.deepEqual(plain.anchor, ["npm run lint", "npm test"], "outside a monorepo nothing changes");
+    assert.equal(plain.seal, "npx jest {file}");
+  });
+});

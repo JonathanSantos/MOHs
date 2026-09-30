@@ -18,10 +18,11 @@ export const routeHandlers: HandlerMap = {
     if (route) route.bolts = true;
   },
 
+  // O seal corre junto da subida: ele só vira o estado de uma route que ainda não começou a subir.
   "seal.started": (r) => {
     if (!r.event.route) return r.moveClimb("sealing");
     const route = r.route();
-    if (!route) return;
+    if (!route || !["planned", "bolting"].includes(route.state)) return;
     r.moveRoute(route, "sealing");
     route.label = "seal";
   },
@@ -34,7 +35,7 @@ export const routeHandlers: HandlerMap = {
     const route = r.route();
     if (!route?.seal) return;
     route.seal.red = true;
-    route.label = "selada";
+    if (route.state === "sealing") route.label = "selada";
   },
   "decisions.taken": (r) => {
     const route = r.route();
@@ -50,12 +51,15 @@ export const routeHandlers: HandlerMap = {
   },
   "route.waiting": (r) => {
     const route = r.route();
-    if (route) route.label = `espera ${r.data.for.join(", ")}`;
+    if (!route) return;
+    route.waitingFor = r.data.for;
+    route.label = `espera ${r.data.for.join(", ")}`;
   },
 
   "route.started": (r) => {
     const route = r.route();
     if (!route) return;
+    route.waitingFor = undefined;
     r.moveRoute(route, "pitching");
     route.startedAt = r.event.ts;
     route.branch = r.data.branch;
@@ -91,6 +95,7 @@ export const routeHandlers: HandlerMap = {
   "send.started": (r) => {
     const route = r.route();
     if (!route) return;
+    route.waitingFor = undefined;
     r.moveRoute(route, "sending");
     route.pos = topOf(route);
     route.label = "send";

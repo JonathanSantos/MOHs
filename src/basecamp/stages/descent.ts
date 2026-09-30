@@ -1,15 +1,20 @@
 import { CrewError } from "../../crew/types.ts";
-import { MOHS_SCALE } from "../../domain/types.ts";
+import { MOHS_SCALE, type FrictionKind } from "../../domain/types.ts";
 import type { ClimbSession } from "../session.ts";
 import type { Stage } from "./stage.ts";
 
+/** Friction that only records what the crew noticed: on its own, nothing went wrong to learn from. */
+const NOTES_ONLY: ReadonlySet<FrictionKind> = new Set(["crew.note"]);
+
 /**
- * The scribe reads the friction and proposes beta. Nothing is applied without a human choosing it.
- * The routes are already at the summit, so a scribe that fails becomes friction, never an aborted climb.
+ * The scribe reads the friction and proposes beta. Nothing is applied without a human choosing it. A climb with no
+ * friction has nothing to teach, so it has no descent. The routes are already at the summit, so a scribe that fails
+ * becomes friction, never an aborted climb.
  */
 export const descentStage: Stage = {
   name: "descent",
-  appliesTo: ({ plan, resume }) => MOHS_SCALE[plan.hardness] > MOHS_SCALE.fluorite && !resume?.descended,
+  appliesTo: ({ plan, resume, view }) =>
+    MOHS_SCALE[plan.hardness] > MOHS_SCALE.fluorite && !resume?.descended && view.friction.some((f) => !NOTES_ONLY.has(f.kind)),
 
   async run(session: ClimbSession) {
     const { crew, journal, view } = session;

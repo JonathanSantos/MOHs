@@ -53,6 +53,32 @@ export function listClimbIds(mohsDir: string): string[] {
 }
 
 /**
+ * The climb that started last. Ids only go down to the minute, and a fix that escalates opens its full climb in the
+ * same minute: sorting ids would leave the choice to the random suffix.
+ */
+export function latestClimbId(mohsDir: string): string | undefined {
+  return listClimbIds(mohsDir)
+    .map((id) => ({ id, at: startedAt(mohsDir, id) }))
+    .sort((a, b) => a.at - b.at || a.id.localeCompare(b.id))
+    .at(-1)?.id;
+}
+
+/** The ts of the climb's first event, read from the head of the log; the minute in the id while the log is empty. */
+function startedAt(mohsDir: string, id: string): number {
+  const file = join(climbDir(mohsDir, id), EVENTS_FILE);
+  if (existsSync(file)) {
+    const fd = openSync(file, "r");
+    const head = Buffer.alloc(256);
+    const read = readSync(fd, head, 0, head.length, 0);
+    closeSync(fd);
+    const ts = /"ts":"([^"]+)"/.exec(head.toString("utf8", 0, read))?.[1];
+    if (ts) return Date.parse(ts);
+  }
+  const [, y, mo, d, h, mi] = /^(\d{4})(\d{2})(\d{2})-(\d{2})(\d{2})/.exec(id) ?? [];
+  return y ? Date.UTC(+y, +mo - 1, +d, +h, +mi) : 0;
+}
+
+/**
  * Follows the event logs of every climb in a project, including those another process is writing.
  * Each poll reads only the bytes appended since the last one; a trailing partial line waits for the next poll.
  */

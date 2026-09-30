@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
-import { existsSync, mkdirSync, realpathSync, rmSync, symlinkSync } from "node:fs";
-import { basename, dirname, join, relative } from "node:path";
-import { isDir, listDir, writeText } from "../util/fs.ts";
+import { copyFileSync, type Dirent, existsSync, lstatSync, mkdirSync, readdirSync, realpathSync, rmSync, symlinkSync } from "node:fs";
+import { basename, dirname, isAbsolute, join, relative } from "node:path";
+import { isDir, listDir, readText, writeText } from "../util/fs.ts";
 import { normalizePath } from "../util/glob.ts";
 import { Git } from "./git.ts";
 
@@ -102,10 +102,16 @@ export class Worktrees {
 
   /**
    * A throwaway detached checkout of `ref`, next to the route worktrees: where the belayer writes the seal
-   * and where the sealed tests meet the code. Nothing in it is ever committed.
+   * and where the sealed tests meet the code. Nothing in it is ever committed. One left behind by a Basecamp that
+   * died (the belayer was still writing when the climb stopped) is thrown away first.
    */
   async scratch(climbId: string, name: string, ref = "HEAD"): Promise<Workspace> {
     const worktree = join(this.baseDir, projectSlug(this.projectRoot), climbId, name);
+    if (isDir(worktree)) {
+      await this.git.tryRun(["worktree", "remove", "--force", worktree]);
+      rmSync(worktree, { recursive: true, force: true });
+      await this.git.tryRun(["worktree", "prune"]);
+    }
     mkdirSync(dirname(worktree), { recursive: true });
     const base = await this.git.run(["rev-parse", ref]);
     await this.git.run(["worktree", "add", "-q", "--detach", worktree, base]);
@@ -148,6 +154,35 @@ export class Worktrees {
     return { hash: await git.run(["rev-parse", "--short", "HEAD"]), files: this.projectPaths(staged) };
   }
 
+  /** What changed in the worktree: since its last commit (a pitch, untracked files included) or since the route began. */
+  async changedFiles(workspace: Workspace, since: "commit" | "base" = "commit"): Promise<string[]> {
+    const git = this.git.at(workspace.worktree);
+    const names = (output: string) => output.split("\0").filter(Boolean);
+    const files =
+      since === "base"
+        ? names(await git.run(["diff", "--name-only", "-z", workspace.base, "HEAD"]))
+        : [
+            ...names(await git.run(["diff", "--name-only", "-z", "HEAD"])),
+            ...names(await git.run(["ls-files", "--others", "--exclude-standard", "-z"])),
+          ];
+    return this.projectPaths([...new Set(files)]).filter((file) => !file.split("/").includes("node_modules"));
+  }
+
+  /** What the route changed since it began, with git's status letter (A, M, D, R…) and the project path. */
+  async statusSinceBase(workspace: Workspace): Promise<{ status: string; path: string }[]> {
+    const fields = (await this.git.at(workspace.worktree).run(["diff", "--name-status", "-z", workspace.base, "HEAD"])).split("\0");
+    const entries: { status: string; path: string }[] = [];
+    for (let i = 0; i < fields.length - 1;) {
+      const status = fields[i++];
+      // Renomeação e cópia trazem dois caminhos: conta o de antes, que é o arquivo que existia.
+      const path = fields[i++];
+      if (/^[RC]/.test(status)) i++;
+      const [projectPath] = this.projectPaths([path]);
+      if (projectPath) entries.push({ status: status[0], path: projectPath });
+    }
+    return entries;
+  }
+
   async commitsSinceBase(workspace: Workspace): Promise<number> {
     return Number(await this.git.at(workspace.worktree).run(["rev-list", "--count", `${workspace.base}..HEAD`]));
   }
@@ -169,12 +204,113 @@ export class Worktrees {
    * A junction on Windows needs no admin rights; elsewhere it is a plain symlink.
    */
   private linkDependencies(root: string): void {
-    const candidates = ["node_modules", ...listDir(this.projectRoot).map((entry) => join(entry, "node_modules"))];
-    for (const rel of candidates) {
-      const source = join(this.projectRoot, rel);
-      const target = join(root, rel);
-      if (isDir(source) && isDir(dirname(target)) && !existsSync(target)) symlinkSync(source, target, "junction");
-    }
+    linkDependencies(this.projectRoot, root);
+  }
+}
+
+/**
+ * Gives a checkout of the project the dependencies installed at its root. A `node_modules` whose packages are all
+ * third-party is linked whole. One with links back into the project (yarn and npm workspaces link each package of the
+ * monorepo there) becomes a real folder: third-party packages still link to the root, and each workspace package links
+ * to the checkout's own copy. Otherwise `require("my-package")` would load the root's code, not the code being changed.
+ */
+export function linkDependencies(projectRoot: string, checkoutRoot: string): void {
+  for (const rel of dependencyFolders(projectRoot)) {
+    const target = join(checkoutRoot, rel);
+    if (!isDir(dirname(target)) || existsSync(target)) continue;
+    linkFolder(join(projectRoot, rel), target, projectRoot, checkoutRoot);
+  }
+}
+
+function linkFolder(source: string, target: string, projectRoot: string, checkoutRoot: string): void {
+  const entries = readdirSync(source, { withFileTypes: true });
+  const back = (entry: Dirent) => workspaceTarget(join(source, entry.name), projectRoot, checkoutRoot);
+  const isScope = (entry: Dirent) => entry.isDirectory() && entry.name.startsWith("@");
+  const pointsBack = entries.some(
+    (entry) =>
+      back(entry) !== null ||
+      (isScope(entry) &&
+        readdirSync(join(source, entry.name), { withFileTypes: true }).some(
+          (inner) => workspaceTarget(join(source, entry.name, inner.name), projectRoot, checkoutRoot) !== null,
+        )),
+  );
+  if (!pointsBack) {
+    symlinkSync(source, target, "junction");
+    return;
+  }
+  mkdirSync(target, { recursive: true });
+  for (const entry of entries) {
+    const from = join(source, entry.name);
+    const to = join(target, entry.name);
+    const own = back(entry);
+    if (own) symlinkSync(own, to, "junction");
+    else if (isScope(entry)) linkFolder(from, to, projectRoot, checkoutRoot);
+    else if (entry.isFile()) copyFileSync(from, to);
+    else symlinkSync(from, to, "junction");
+  }
+}
+
+/** The checkout's copy of a workspace package, when `path` is a link from node_modules back into the project. */
+function workspaceTarget(path: string, projectRoot: string, checkoutRoot: string): string | null {
+  if (!lstatSync(path).isSymbolicLink()) return null;
+  let real: string;
+  try {
+    real = realpathSync(path);
+  } catch {
+    return null;
+  }
+  const inside = relative(realpathSync(projectRoot), real);
+  if (!inside || inside.startsWith("..") || isAbsolute(inside) || inside.split(/[\\/]/).includes("node_modules")) return null;
+  const own = join(checkoutRoot, inside);
+  return existsSync(own) ? own : null;
+}
+
+/**
+ * Every `node_modules` a checkout of the project needs, relative to its root: the root's, one level down, and each
+ * workspace package's (`packages/*` in package.json `workspaces`), where yarn and npm keep the versions they could not
+ * hoist. A monorepo like React has a dozen of those; without them its tests do not run in a worktree.
+ */
+export function dependencyFolders(projectRoot: string): string[] {
+  const workspaces = workspacePackages(projectRoot);
+  const candidates = [
+    "node_modules",
+    ...listDir(projectRoot).map((entry) => join(entry, "node_modules")),
+    ...workspaces.map((dir) => join(dir, "node_modules")),
+  ];
+  return [...new Set(candidates)].filter((rel) => isDir(join(projectRoot, rel)));
+}
+
+/** The packages of a monorepo (`workspaces` in package.json, `dir/*` expanded), relative to the root; none otherwise. */
+export function workspacePackages(projectRoot: string): string[] {
+  return readWorkspaces(projectRoot)
+    .flatMap((pattern) => {
+      const clean = pattern.replace(/\/+$/, "");
+      if (!clean.endsWith("/*")) return [clean];
+      const parent = clean.slice(0, -2);
+      return listDir(join(projectRoot, parent)).map((entry) => `${parent}/${entry}`);
+    })
+    .filter((dir) => isDir(join(projectRoot, dir)));
+}
+
+/** The packages these files belong to: what a monorepo's tests are scoped to (`{packages}` in a command). */
+export function packagesOf(files: readonly string[], packages: readonly string[]): string[] {
+  return [...new Set(files.flatMap((file) => packages.filter((dir) => file === dir || file.startsWith(`${dir}/`))))];
+}
+
+/** Workspace globs from package.json (npm, yarn) or pnpm-workspace.yaml; `**` globs are left out. */
+function readWorkspaces(projectRoot: string): string[] {
+  const usable = (list: unknown[]) =>
+    list.filter((entry): entry is string => typeof entry === "string" && !entry.includes("**") && !entry.startsWith("!"));
+  const pnpm = readText(join(projectRoot, "pnpm-workspace.yaml"));
+  if (pnpm !== null) {
+    const block = /^packages:\s*\n((?:\s+-.*\n?)+)/m.exec(pnpm)?.[1] ?? "";
+    return usable([...block.matchAll(/^\s+-\s*['"]?([^'"#\n]+?)['"]?\s*$/gm)].map((match) => match[1]));
+  }
+  try {
+    const pkg = JSON.parse(readText(join(projectRoot, "package.json")) ?? "{}") as { workspaces?: string[] | { packages?: string[] } };
+    return usable(Array.isArray(pkg.workspaces) ? pkg.workspaces : (pkg.workspaces?.packages ?? []));
+  } catch {
+    return [];
   }
 }
 

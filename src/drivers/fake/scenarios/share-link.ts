@@ -47,6 +47,23 @@ export const shareLink: Scenario = {
       "Workspaces web (React + Vite + zustand + react-query) e server (Fastify). Unit com vitest no web; e2e com Playwright em e2e/, tag @rapido para a suíte curta.",
   },
   line: LINE,
+  decisions: [
+    {
+      question: "O que alguém vê ao abrir o link de um protótipo que foi apagado?",
+      options: [
+        { choice: 'a mensagem "Este protótipo não existe mais"', why: "diz o que aconteceu, como a mensagem do link expirado" },
+        { choice: "a página 404 genérica do site", why: "não conta a um estranho que o protótipo existiu" },
+      ],
+    },
+    {
+      question: "Quem pode desativar um link antes de ele expirar?",
+      options: [
+        { choice: "quem criou o link", why: "é quem sabe para quem mandou" },
+        { choice: "qualquer editor do projeto", why: "resolve quando quem criou não está por perto" },
+        { choice: "ninguém: o link só expira", why: "o pedido fala só em expirar em 30 dias" },
+      ],
+    },
+  ],
   routes: [
     {
       id: "A",

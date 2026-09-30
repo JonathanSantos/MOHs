@@ -61,7 +61,7 @@ ${options.annex ? `  <section class="annex">${options.annex}</section>\n` : ""}
     <section id="line-section" aria-labelledby="h-line">
       <h2 id="h-line">A line que o humano assinou</h2>
       <div class="chips" id="line-facts"></div>
-      <h3>Decisões a confirmar</h3>
+      <h3>Decisões</h3>
       <ol class="numbered" id="line-decisions"></ol>
     </section>
     <section aria-labelledby="h-delivery">

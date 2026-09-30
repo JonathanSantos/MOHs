@@ -12,7 +12,7 @@ export const AGENT_SKILL = join(CORE_DIR, "agent", "SKILL.md");
 export const agentCommand = defineCommand({
   name: "agent",
   args: `[install <${PLATFORMS.join("|")}>]`,
-  summary: "mostra as instruções para o agente; com install, instala a skill e os hooks no projeto",
+  summary: "mostra as instruções para o agente; com install, instala a skill, os agentes por papel e os hooks no projeto",
   flags: {},
 
   run({ projectRoot, args: [action, platform] }) {

@@ -62,7 +62,7 @@ node src/cli.ts init --cwd ../meu-projeto
 
 O `init` cria `.mohs/` com os comandos detectados e um **plano de testes**: o que roda os testes selados agora (o runner do projeto ou o da linguagem) e o que é recomendado para a stack, com o comando para instalar.
 
-Para o agente seguir o MOHs (skill e hooks de Claude Code ou Copilot):
+Para o agente seguir o MOHs (skill, agentes por papel e hooks de Claude Code ou Copilot):
 
 ```bash
 node src/cli.ts agent install claude --cwd ../meu-projeto
@@ -118,7 +118,7 @@ node src/cli.ts climb --crew fake --cwd gym/demo
 | **inspector** | revisa o diff com uma rubrica (segurança, arquitetura, UI…)   | decide o que bloqueia (é o brake)        |
 | **scribe**    | lê o atrito do climb e propõe melhorias                       | aplica algo sem você escolher            |
 
-Com subagentes, cada papel roda num contexto isolado, e um nome que já foi belayer não pega tarefa de climber. Os limites que as regras definem viram hooks: com `mohs agent install`, o que é proibido é negado na hora, com o motivo.
+Com subagentes, cada papel roda num contexto isolado, com um agente que só tem as ferramentas do papel, e um nome que já foi belayer não pega tarefa de climber. O belayer escreve o seal enquanto o climber sobe; só o send espera por ele. Sem subagentes, `mohs climb --solo`: os testes vêm antes do código, visíveis e travados, porque um segredo que o próprio autor conhece não prova nada. Os limites que as regras definem viram hooks: com `mohs agent install`, o que é proibido é negado na hora, com o motivo.
 
 ## Configuração
 

@@ -1,9 +1,10 @@
 import { randomBytes } from "node:crypto";
+import type { DraftDecision, SealedFile } from "../crew/types.ts";
 import { join } from "node:path";
 import type { ResolvedConfig } from "../config/types.ts";
 import type { ClimbNotes, Crew, CrewObserver, Runner, SealedTests } from "../crew/types.ts";
 import type { PlannedRoute } from "../domain/plan.ts";
-import type { ClimbKind, Hardness } from "../domain/types.ts";
+import type { ClimbKind, Hardness, Intent } from "../domain/types.ts";
 import type { CheckDefinition } from "../index.ts";
 import type { SurveyResult } from "../survey/survey.ts";
 import { readText } from "../util/fs.ts";
@@ -21,9 +22,13 @@ import { TraceLog } from "./trace.ts";
 export interface ClimbPlan {
   kind: ClimbKind;
   hardness: Hardness;
+  /** What the request asks for (a talc fix has none: nobody planned it). */
+  intent?: Intent;
   routes: PlannedRoute[];
   /** The line the scout wrote with the plan. Only kept for a fluorite climb: harder ones need the setter's. */
   line?: string;
+  /** The decisions that came with the scout's line. */
+  decisions?: DraftDecision[];
 }
 
 export interface SessionOptions {
@@ -38,6 +43,11 @@ export interface SessionOptions {
   hardness?: Hardness;
   /** Picks up a climb whose Basecamp stopped: what its log says is done is not done again. */
   resume?: ResumePoint;
+  /**
+   * One agent plays every role (it cannot create subagents): the tests come first and stay visible but locked, since
+   * a secret its author already knows proves nothing.
+   */
+  solo?: boolean;
   clock?: () => Date;
 }
 
@@ -80,11 +90,14 @@ export class ClimbSession {
   readonly gate: HumanGate;
   /** Sealed tests per route, in memory for the belayer and the leak guard. The files stay with the runner. */
   readonly sealed = new Map<string, SealedTests>();
+  /** The test that reproduces the bug (intent fix): shown to the climber of the first route and run at its send. */
+  repro?: { files: SealedFile[]; shows: string; output: string };
   /** The same tests as one text per route, for the leak guard. */
   readonly sealedCode = new Map<string, string>();
   readonly trace: TraceLog;
   readonly desk: Desk;
   readonly resume?: ResumePoint;
+  readonly solo: boolean;
   /** The project's TypeScript checks, loaded when the climb starts. */
   checks: CheckDefinition[] = [];
   /** The delivery branch that joins the routes, when the climb has more than one. */
@@ -106,6 +119,7 @@ export class ClimbSession {
     this.journal = new Journal(this.log);
     this.trace = new TraceLog(this.dir);
     this.resume = options.resume;
+    this.solo = options.solo ?? options.resume?.solo ?? false;
     // Retomado, o climb parte da projeção do log que já existe; dali em diante, projeção estrita como sempre.
     this.view = options.resume ? project(readEvents(this.log.file)) : emptyView(this.id);
     // O Basecamp projeta em modo estrito: uma transição inválida é bug e precisa parar o climb.

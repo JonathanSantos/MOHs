@@ -7,8 +7,19 @@ export const SCOUT_HARDNESS = ["fluorite", "quartz", "diamond"] as const satisfi
 /** Posição de cada hardness na escala de Mohs. */
 export const MOHS_SCALE: Readonly<Record<Hardness, number>> = { talc: 1, fluorite: 4, quartz: 7, diamond: 10 };
 
-export const ROLES = ["scout", "setter", "belayer", "climber", "inspector", "scribe"] as const;
+export const ROLES = ["scout", "reproducer", "setter", "belayer", "climber", "inspector", "scribe"] as const;
 export type Role = (typeof ROLES)[number];
+
+/**
+ * What the request asks for, which the scout reads alongside the hardness: a bug to fix, a feature in code that exists,
+ * a refactoring that must not change behavior, or new code. Each brings its own checks (see ceremony.ts).
+ */
+export const INTENTS = ["fix", "feature", "refactor", "new"] as const;
+export type Intent = (typeof INTENTS)[number];
+
+export function isIntent(value: unknown): value is Intent {
+  return typeof value === "string" && (INTENTS as readonly string[]).includes(value);
+}
 
 export const SEVERITIES = ["critical", "high", "medium", "low"] as const;
 export type Severity = (typeof SEVERITIES)[number];
@@ -33,6 +44,8 @@ export const FRICTION_KINDS = [
   "line.edited",
   "signature.stale",
   "seal.green",
+  "repro.green",
+  "tests.changed",
   "seal.oversized",
   "seal.disputed",
   "scope.drift",

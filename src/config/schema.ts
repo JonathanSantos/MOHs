@@ -18,6 +18,7 @@ const rackRole = z.strictObject({
 const perRole = <T extends z.ZodType>(schema: T) =>
   z.strictObject({
     scout: schema.optional(),
+    reproducer: schema.optional(),
     setter: schema.optional(),
     belayer: schema.optional(),
     climber: schema.optional(),

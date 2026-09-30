@@ -1,5 +1,5 @@
 import { join } from "node:path";
-import { climbsDir, listClimbIds } from "../../basecamp/event-log.ts";
+import { climbsDir, latestClimbId } from "../../basecamp/event-log.ts";
 import { defaultUserDir, mohsDirOf } from "../../config/paths.ts";
 import { HOOK_EVENTS, readHookInput, type HookEvent } from "../../hooks/input.ts";
 import { contextOutput, isPlatform, PLATFORMS, stopOutput, toolOutput, type Platform } from "../../hooks/output.ts";
@@ -43,7 +43,7 @@ async function answer(event: HookEvent, projectRoot: string, platform: Platform)
   const input = readHookInput(parse(await readStdin()), projectRoot);
   const root = findProject([projectRoot, process.env.CLAUDE_PROJECT_DIR, input.cwd]);
   if (!root) return null;
-  const climbId = listClimbIds(mohsDirOf(root)).sort().at(-1);
+  const climbId = latestClimbId(mohsDirOf(root));
   const climbDir = climbId ? join(climbsDir(mohsDirOf(root)), climbId) : null;
   const situation = climbDir ? readSituation(climbDir) : null;
 

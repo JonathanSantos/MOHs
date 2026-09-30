@@ -1,16 +1,19 @@
 import { isRigged, type PlannedRoute } from "../domain/plan.ts";
 import { Integration } from "./integration.ts";
-import { sealedCode } from "../crew/types.ts";
+import { sealedCode, type RouteWorkspace } from "../crew/types.ts";
 import { sealRoute, setBolts, signBolts } from "./rigging.ts";
 import { RouteClimber } from "./route-climber.ts";
 import type { ClimbSession } from "./session.ts";
 import { blockersOf, planWindows } from "./windows.ts";
 
 /**
- * Takes every route up, each one as soon as it can. A route above fluorite gets its bolts and seal first (the seal
- * waits for the bolts of the routes it depends on, which its tests use); then it waits only for the routes it must
- * start from, until they join the delivery. Nothing waits for an unrelated route's rigging: a fluorite route climbs
- * while the belayers of the others are still writing tests.
+ * Takes every route up, each one as soon as it can. A route above fluorite gets its bolts first; its seal waits for the
+ * bolts of the routes it depends on, which its tests use. Then the route waits only for the routes it must start from,
+ * until they join the delivery. Nothing waits for an unrelated route's rigging: a fluorite route climbs while the
+ * belayers of the others are still writing tests.
+ *
+ * The seal is written while the climber climbs: the climber never sees it and it only runs in the send, so the send
+ * is the only thing that waits for it. Solo, the tests come first (TDD): the climber reads them, so the climb waits.
  */
 export class Ascent {
   private readonly session: ClimbSession;
@@ -23,6 +26,8 @@ export class Ascent {
   private readonly finished = new Set<string>();
   /** One merge at a time: the delivery grows in the order routes reach the summit. */
   private merges: Promise<unknown> = Promise.resolve();
+  /** A seal that stops the climb (a human chose abort) stops it at once, not when its route reaches the send. */
+  private stop: (error: unknown) => void = () => undefined;
 
   constructor(session: ClimbSession) {
     this.session = session;
@@ -46,12 +51,14 @@ export class Ascent {
       this.settled.set(route.id, handled(climb));
       return climb;
     });
-    await Promise.all(climbs);
+    const stopped = new Promise<never>((_, reject) => (this.stop = reject));
+    await Promise.race([Promise.all(climbs), stopped]);
   }
 
   /** The bolts of a route above fluorite; a resumed climb keeps those already set, and only waits for the signature. */
   private async rig(route: PlannedRoute): Promise<void> {
-    if (!isRigged(route)) return;
+    // Solo, os bolts seriam um contrato do agente com ele mesmo: só o diamond os mantém, porque o humano os assina.
+    if (!isRigged(route) || (this.session.solo && route.hardness !== "diamond")) return;
     const progress = this.session.resume?.routes.get(route.id);
     if (!progress?.bolted) return setBolts(this.session, route);
     if (route.hardness === "diamond" && !progress.boltsSigned) await signBolts(this.session, route);
@@ -64,18 +71,30 @@ export class Ascent {
       else if (this.integration) await this.merge(route);
       return;
     }
+    const blockers = blockersOf(route, this.windows);
+    let seal: PendingSeal | undefined;
+    let workspace: Promise<RouteWorkspace> | undefined;
     if (isRigged(route)) {
       const dependencies = (route.after ?? []).flatMap((id) => this.bolted.get(id) ?? []);
       await Promise.all([this.bolted.get(route.id), ...dependencies]);
-      if (!(progress?.sealed && (await this.restoreSeal(route)))) await sealRoute(this.session, route);
+      const restored = progress?.sealed && (await this.restoreSeal(route));
+      if (this.session.solo) {
+        if (!restored) await sealRoute(this.session, route);
+      } else if (!restored) {
+        // Uma route que já pode subir prepara o worktree do climber antes: a tarefa dele abre logo depois da do belayer.
+        if (blockers.every((id) => this.finished.has(id))) workspace = handled(this.session.runner.prepare(route));
+        let belaying!: () => void;
+        const opened = new Promise<void>((resolve) => (belaying = resolve));
+        seal = inProgress(sealRoute(this.session, route, { after: workspace, belaying }), this.stop);
+        await Promise.race([opened, seal.ready.catch(() => undefined)]);
+      }
     }
-    const blockers = blockersOf(route, this.windows);
     const pending = blockers.filter((id) => !this.finished.has(id));
     if (pending.length) {
       this.session.journal.record("route.waiting", { for: pending }, { actor: "basecamp", route: route.id });
       await Promise.all(blockers.map((id) => this.settled.get(id)));
     }
-    const summited = await new RouteClimber(this.session, route, progress).climb();
+    const summited = await new RouteClimber(this.session, route, { progress, seal, workspace }).climb();
     if (summited && this.integration) await this.merge(route);
   }
 
@@ -93,6 +112,19 @@ export class Ascent {
     this.merges = handled(merged);
     return merged;
   }
+}
+
+/** A route's seal while its belayer writes it: the send awaits `ready`; `done` says whether it will have to wait. */
+export interface PendingSeal {
+  ready: Promise<void>;
+  done(): boolean;
+}
+
+function inProgress(written: Promise<void>, stop: (error: unknown) => void): PendingSeal {
+  let settled = false;
+  const ready = handled(written.finally(() => (settled = true)));
+  ready.catch(stop);
+  return { ready, done: () => settled };
 }
 
 /**

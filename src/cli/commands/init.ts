@@ -41,6 +41,10 @@ export const initCommand = defineCommand({
     const chosen = flags.tests ? TEST_OPTIONS[flags.tests] : undefined;
     if (chosen && "install" in chosen) print("", ink.warn(`Instale antes do primeiro climb: ${chosen.install}`));
     if (profile.workspaces.length) print(`  workspaces  ${profile.workspaces.join(", ")}`);
+    if (profile.monorepo)
+      print(
+        "  monorepo    a anchor roda os testes só dos pacotes que cada pitch tocou ({packages}); lint e testes da raiz inteira ficam fora",
+      );
     print("", `Próximo passo: ${ink.rope("mohs doctor")}`);
     return 0;
   },

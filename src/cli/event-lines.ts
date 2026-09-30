@@ -1,7 +1,8 @@
 import { summarizeCall } from "../domain/calls.ts";
+import type { SettledDecision } from "../domain/decisions.ts";
 import type { EventType, MohsEvent } from "../domain/events.ts";
 import { describeEvidence, type EvidenceGrade } from "../domain/evidence.ts";
-import { describeWindows } from "../domain/plan.ts";
+import { describeWait, describeWindows } from "../domain/plan.ts";
 import type { Severity } from "../domain/types.ts";
 import { formatO2 } from "../util/o2.ts";
 import type { ClimbView } from "../view/types.ts";
@@ -31,7 +32,20 @@ const WRITERS: LineWriters = {
   "survey.ready": ({ data }) => row("survey", `${data.files} arquivos · ${data.kind === "variation" ? "variation" : "first ascent"}`),
   "route.started": ({ route, data }) => (data.branch ? row("route", `${route} · worktree na branch ${data.branch}`) : null),
   "line.drafted": ({ data }) =>
-    row("line", `pronta para assinar (${data.hash.slice(0, 7)}) → ${ink.rope("mohs sign")} ou no Lookout`, ink.warn),
+    row(
+      "line",
+      `pronta para assinar (${data.hash.slice(0, 7)})${data.decisions?.length ? ` · ${data.decisions.length} decisões com opções` : ""} → ${ink.rope("mohs sign")} ou no Lookout`,
+      ink.warn,
+    ),
+  "line.decided": ({ data }) => row("decisões", describeSettled(data.decisions)),
+  "repro.red": ({ data }) => row("repro", `${data.files.join(", ")} falha hoje: ${data.shows}`),
+  "repro.adopted": ({ route, data }) =>
+    row("repro", `route ${route} · teste de reprodução no projeto${data.skipped.length ? ` (fora: ${data.skipped.join(", ")})` : ""}`),
+  "repro.verified": ({ route, data }) =>
+    row(
+      "repro",
+      `route ${route} · ${data.files.map((file) => `${file.path}: ${file.failedBefore && file.passesNow ? "falhava antes, passa agora" : file.failedBefore ? "ainda falha" : "já passava antes"}`).join(" · ")}`,
+    ),
   "line.signed": ({ data }) => row("line", `assinada por ${data.by}`, ink.ok),
   "signature.requested": ({ data }) =>
     row("sign", `${data.what}: revise ${data.review} → ${ink.rope(`mohs sign ${data.target}`)}`, ink.warn),
@@ -54,7 +68,7 @@ const WRITERS: LineWriters = {
     row("resumed", `o Basecamp anterior parou no evento ${data.after}; seguindo do que ficou pronto`, ink.warn),
   "climb.escalated": ({ data }) => row("escalated", `a correção pediu o fluxo completo: ${data.reason}`, ink.warn),
   "ascent.planned": ({ data }) => row("ascent", `${describeWindows(data.windows)} · cada route sobe assim que pode`),
-  "route.waiting": ({ route, data }) => row("waiting", `route ${route} pronta · espera ${data.for.join(", ")} entrar na entrega`),
+  "route.waiting": ({ route, data }) => row("waiting", `route ${route} pronta · ${describeWait(data.for)}`),
   "window.opened": ({ data }) => row("window", `${data.n} · routes ${data.routes.join(", ")} em paralelo`),
   "pitch.started": ({ route, pitch, data }) => {
     const skills = data.pack.skills.length ? ` · ${data.pack.skills.join(", ")}` : "";
@@ -139,4 +153,11 @@ function severityLabel(severity: Severity): string {
   const label = severity.toUpperCase();
   if (severity === "critical" || severity === "high") return ink.crit(label);
   return severity === "medium" ? ink.warn(label) : ink.dim(label);
+}
+
+/** How the human settled the line's decisions, in one line. */
+function describeSettled(decisions: readonly SettledDecision[]): string {
+  const changed = decisions.filter((decision) => decision.by !== "recommended");
+  if (!changed.length) return `${decisions.length} com a recomendada`;
+  return `${changed.map((decision) => `${decision.id} → ${decision.answer}`).join(" · ")}${changed.length < decisions.length ? ` · as outras com a recomendada` : ""}`;
 }

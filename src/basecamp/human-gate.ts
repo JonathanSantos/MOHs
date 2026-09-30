@@ -1,6 +1,7 @@
 import { join } from "node:path";
+import { settle, signedLine } from "../domain/decisions.ts";
 import type { RescueOption } from "../domain/types.ts";
-import { readText, sha256 } from "../util/fs.ts";
+import { readText, sha256, writeText } from "../util/fs.ts";
 import type { ClimbView } from "../view/types.ts";
 import { CLIMB_FILES, LINE_TARGET, type Desk } from "./desk.ts";
 import type { Journal } from "./journal.ts";
@@ -35,7 +36,9 @@ export class HumanGate {
 
   /**
    * Waits until someone signs the line as it reads now. If the file changed after it was drafted,
-   * the new text becomes a new draft and only a signature of that text is accepted.
+   * the new text becomes a new draft and only a signature of that text is accepted. A line with decisions is signed
+   * with the human's choices: the signed line keeps only what was decided (`line.decided`), and that is what the
+   * crew reads from then on.
    */
   async awaitLineSignature(): Promise<void> {
     const { desk, dir, journal, view } = this.deps;
@@ -52,7 +55,18 @@ export class HumanGate {
         journal.friction("line.edited", "a line mudou antes da assinatura; a assinatura precisa ser do texto novo");
       }
       if (signature.hash === now) {
-        journal.record("line.signed", { hash: now, by: signature.by }, { actor: "human" });
+        const { body, decisions } = view.line ?? {};
+        if (body === undefined || !decisions?.length) {
+          journal.record("line.signed", { hash: now, by: signature.by }, { actor: "human" });
+          return;
+        }
+        // Quem assina pela CLI ou pelo Lookout já teve as escolhas conferidas; uma inválida fica com a recomendada.
+        const { settled } = settle(decisions, signature.choices);
+        const signed = signedLine(body, settled);
+        const hash = sha256(signed);
+        writeText(file, signed);
+        journal.record("line.decided", { hash, text: signed, decisions: settled }, { actor: "human" });
+        journal.record("line.signed", { hash, by: signature.by }, { actor: "human" });
         return;
       }
       if (!edited) journal.friction("signature.stale", "assinatura de uma versão anterior da line");

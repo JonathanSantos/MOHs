@@ -14,6 +14,8 @@ export const CLIMB_FILES = {
 export interface Signature {
   hash: string;
   by: string;
+  /** The line's decisions the human settled otherwise than recommended: `D1` → `B`, or their own words. */
+  choices?: Record<string, string>;
 }
 
 /** The line is signed with this target; bolts and summits use their own (`bolts-A`, `summit-A`). */
@@ -67,7 +69,13 @@ export class FileDesk implements Desk {
       return { hash: request.current(), by: "auto" };
     }
     const data = await this.nextFile(signatureFile(climbDir, request.target));
-    return { hash: String(data.hash ?? ""), by: String(data.by ?? "human") };
+    const choices = data.choices && typeof data.choices === "object" ? (data.choices as Record<string, unknown>) : {};
+    const strings = Object.entries(choices).filter((entry): entry is [string, string] => typeof entry[1] === "string");
+    return {
+      hash: String(data.hash ?? ""),
+      by: String(data.by ?? "human"),
+      ...(strings.length ? { choices: Object.fromEntries(strings) } : {}),
+    };
   }
 
   async waitForRescue(climbDir: string, options: readonly RescueOption[]): Promise<RescueOption> {
@@ -106,16 +114,16 @@ export function signatureFile(climbDir: string, target: string): string {
 }
 
 /** Signs `target` with the hash the person saw. The Basecamp accepts it only if that is still what it holds. */
-export function sign(climbDir: string, target: string, hash: string, by: string): void {
-  writeText(signatureFile(climbDir, target), JSON.stringify({ hash, by, at: new Date().toISOString() }));
+export function sign(climbDir: string, target: string, hash: string, by: string, choices?: Record<string, string>): void {
+  writeText(signatureFile(climbDir, target), JSON.stringify({ hash, by, choices, at: new Date().toISOString() }));
 }
 
-/** Signs the line as it reads now. The signature is only valid for this exact text. */
-export function signLine(climbDir: string, by: string): string {
+/** Signs the line as it reads now, with the human's choices for its decisions. Only valid for this exact text. */
+export function signLine(climbDir: string, by: string, choices?: Record<string, string>): string {
   const text = readText(join(climbDir, CLIMB_FILES.line));
   if (text === null) throw new Error("This climb has no line to sign yet");
   const hash = sha256(text);
-  sign(climbDir, LINE_TARGET, hash, by);
+  sign(climbDir, LINE_TARGET, hash, by, choices);
   return hash;
 }
 

@@ -1,7 +1,8 @@
 import type { Call } from "./calls.ts";
+import type { LineDecision, SettledDecision } from "./decisions.ts";
 import type { Evidence } from "./evidence.ts";
 import type { PlannedRouteWithBudget } from "./plan.ts";
-import type { ClassifiedFinding, ClimbKind, FixReason, FrictionKind, Hardness, Proposal, RescueOption } from "./types.ts";
+import type { ClassifiedFinding, ClimbKind, FixReason, FrictionKind, Hardness, Proposal, RescueOption, Intent } from "./types.ts";
 
 export interface PackSummary {
   tokens: number;
@@ -17,14 +18,32 @@ type Empty = Record<string, never>;
  * É o contrato entre o Basecamp (que grava), o reducer (que projeta) e quem exibe (CLI e Lookout).
  */
 export interface EventPayloads {
-  "climb.started": { request: string; project: string; scenario?: string; autoSign?: boolean };
+  "climb.started": { request: string; project: string; scenario?: string; autoSign?: boolean; solo?: boolean };
   "scout.started": Empty;
-  "scout.hardness": { kind: ClimbKind; hardness: Hardness; reason: string; budget: number; routes: PlannedRouteWithBudget[] };
+  "scout.hardness": {
+    kind: ClimbKind;
+    hardness: Hardness;
+    intent?: Intent;
+    reason: string;
+    budget: number;
+    routes: PlannedRouteWithBudget[];
+  };
   "scout.escalated": { from: Hardness; to: Hardness; reason: string };
   "survey.started": Empty;
   "survey.ready": { kind: ClimbKind; files: number; summary: string };
+  "repro.started": Empty;
+  "repro.written": { files: string[]; shows: string; attempt: number };
+  /** Every reproduction file fails on the code as it is: the bug is shown. */
+  "repro.red": { files: string[]; shows: string; output: string };
+  /** The reproduction joined the route's branch as a regression test. */
+  "repro.adopted": { files: string[]; skipped: string[] };
+  /** A climber's own reproduction (talc), checked: fails on the base, passes now. */
+  "repro.verified": { files: { path: string; failedBefore: boolean; passesNow: boolean }[] };
   "line.started": Empty;
-  "line.drafted": { hash: string; text: string };
+  /** `text` is what the human reviews: the setter's `body` and, when there are any, the `decisions` with their options. */
+  "line.drafted": { hash: string; text: string; body?: string; decisions?: LineDecision[] };
+  /** The human's answers at the signature; `text` is the line as signed, with only what was decided. */
+  "line.decided": { hash: string; text: string; decisions: SettledDecision[] };
   "line.signed": { hash: string; by: string };
   /** Something besides the line waits for a human signature: diamond bolts, a diamond summit. */
   "signature.requested": { target: string; what: string; hash: string; review: string; text?: string };

@@ -2,6 +2,7 @@ import { join } from "node:path";
 import { z } from "zod";
 import { answerRescue, CLIMB_FILES, LINE_TARGET, sign, signLine } from "../basecamp/desk.ts";
 import { climbDir } from "../basecamp/event-log.ts";
+import { settle } from "../domain/decisions.ts";
 import { RESCUE_OPTIONS } from "../domain/types.ts";
 import { isDir, readText, sha256 } from "../util/fs.ts";
 import type { ClimbHub } from "./hub.ts";
@@ -18,6 +19,7 @@ const commandSchema = z.discriminatedUnion("cmd", [
       .string()
       .regex(/^[\w-]+$/)
       .optional(),
+    choices: z.record(z.string().regex(/^D\d+$/), z.string().min(1).max(200)).optional(),
   }),
   z.strictObject({ cmd: z.literal("rescue"), climb: climbId, option: z.enum(RESCUE_OPTIONS) }),
 ]);
@@ -50,7 +52,9 @@ const HANDLERS: { [C in Command["cmd"]]: (ctx: CommandContext<C>) => CommandOutc
     if (sha256(readText(join(dir, CLIMB_FILES.line)) ?? "") !== command.hash) {
       return { ok: false, message: "A line mudou desde que você abriu. Leia a versão nova antes de assinar." };
     }
-    signLine(dir, "lookout");
+    const { problems } = settle(hub.view(command.climb)?.line?.decisions ?? [], command.choices);
+    if (problems.length) return { ok: false, message: problems.join("; ") };
+    signLine(dir, "lookout", command.choices);
     return { ok: true };
   },
 

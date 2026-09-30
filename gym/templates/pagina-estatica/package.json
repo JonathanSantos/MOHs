@@ -1,0 +1,11 @@
+{
+  "name": "pagina",
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "node --test"
+  },
+  "devDependencies": {
+    "jsdom": "^30.1.1"
+  }
+}

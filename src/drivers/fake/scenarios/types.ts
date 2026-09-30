@@ -1,4 +1,5 @@
 import type { ClimbKind, Finding, FrictionKind, Hardness, Proposal } from "../../../domain/types.ts";
+import type { DraftDecision } from "../../../crew/types.ts";
 
 export type ScenarioFinding = Omit<Finding, "inspector">;
 
@@ -49,6 +50,8 @@ export interface Scenario {
   reason: string;
   survey: { files: number; summary: string; languages?: string[]; tests?: number };
   line: string;
+  /** The points the line leaves to the human, with options. */
+  decisions?: DraftDecision[];
   routes: ScenarioRoute[];
   proposals: Proposal[];
 }

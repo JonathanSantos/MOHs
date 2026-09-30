@@ -1,4 +1,5 @@
 import { basename, join, resolve } from "node:path";
+import { optionLetter, type LineDecision } from "../../domain/decisions.ts";
 import { LINE_TARGET } from "../../basecamp/desk.ts";
 import { describeEvidence } from "../../domain/evidence.ts";
 import { answerLimits, ANSWERS, type AnswerName } from "../../tasks/answers.ts";
@@ -44,6 +45,7 @@ const RENDERERS: { [K in Situation["kind"]]: Renderer<K> } = {
     ...(tasks.some((task) => isSealedRole(task.role))
       ? ["Tarefa de belayer só aparece para quem pede o papel: quem escreve os testes selados não implementa depois."]
       : []),
+    ...stillWorking(tasks),
     `Se você faz os outros papéis sozinho, abra uma tarefa com: ${command(projectRoot, "next --task <id>")}`,
   ],
 
@@ -55,11 +57,13 @@ const RENDERERS: { [K in Situation["kind"]]: Renderer<K> } = {
   held: ({ tasks }, { projectRoot, as }) => [
     `Nada para ${as ?? "você"} agora: ${tasks.map((task) => `${task.id} está com ${task.claimedBy} desde ${clock(task.claimedAt)}`).join("; ")}.`,
     `Espere e rode de novo: ${command(projectRoot, `next${as ? ` --as ${as}` : ""}`)}`,
+    ...stillWorking(tasks),
   ],
 
-  signature: ({ target, what, review }, { projectRoot }) => [
+  signature: ({ target, what, review, decisions }, { projectRoot }) => [
     `${ink.bold(`${what} espera a assinatura humana. Agora é a vez do humano.`)}`,
     ...(target === LINE_TARGET ? [`Para você conferir o que foi gravado: ${command(projectRoot, "line")}`] : []),
+    ...describeDecisions(decisions ?? [], projectRoot),
     `Peça ao humano para revisar ${review} (ou no Lookout: ${command(projectRoot, "lookout")}) e assinar com: ${command(projectRoot, target === LINE_TARGET ? "sign" : `sign ${target}`)}`,
     "Não assine no lugar do humano.",
     `Depois da assinatura, rode: ${command(projectRoot, "next")}`,
@@ -246,4 +250,29 @@ function compactJson(value: unknown): string {
 function command(projectRoot: string, rest: string, workDir: string = projectRoot): string {
   const here = [workDir, process.cwd()].every((dir) => resolve(dir) === resolve(projectRoot));
   return `${mohsBin()} ${rest}${here ? "" : ` --cwd ${quote(projectRoot)}`}`;
+}
+
+/** The line's decisions as the human chooses them: the recommended first, a warning when it goes against the request. */
+function describeDecisions(decisions: readonly LineDecision[], projectRoot: string): string[] {
+  if (!decisions.length) return [];
+  return [
+    "",
+    "Decisões que o pedido deixou em aberto (a recomendada vem primeiro; o humano pode escolher outra ou responder com as palavras dele):",
+    ...decisions.flatMap((decision) => [
+      `  ${decision.id} · ${decision.question}`,
+      `     ${decision.options.map((option, index) => `${optionLetter(index)}${index === 0 ? " (recomendada)" : ""}: ${option.choice}`).join("  ·  ")}`,
+      ...(decision.against ? [`     ${ink.warn(`⚠ a recomendada contraria o pedido: "${decision.against}"`)}`] : []),
+    ]),
+    `Com as recomendadas: ${command(projectRoot, "sign")}  ·  com outras escolhas: ${command(projectRoot, 'sign D1=B "D2=…"')}`,
+    "",
+  ];
+}
+
+/** Tasks other agents hold: whoever orchestrates waits for them, never ends its turn with them still running. */
+function stillWorking(tasks: readonly TaskBrief[]): string[] {
+  const agents = [...new Set(tasks.flatMap((task) => (task.claimedBy ? [task.claimedBy] : [])))];
+  if (!agents.length) return [];
+  return [
+    `Em andamento com ${agents.join(", ")}: se você orquestra, espere cada um terminar antes de encerrar o seu turno ou relatar o climb. Um relato com subagentes ainda rodando deixa o climb sem ninguém olhando.`,
+  ];
 }
