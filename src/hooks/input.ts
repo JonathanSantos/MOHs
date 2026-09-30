@@ -1,4 +1,4 @@
-import { isAbsolute, resolve } from "node:path";
+import { resolve } from "node:path";
 
 export const HOOK_EVENTS = ["pre-tool-use", "stop", "session-start"] as const;
 export type HookEvent = (typeof HOOK_EVENTS)[number];
@@ -62,7 +62,8 @@ export function readHookInput(raw: unknown, fallbackCwd: string): HookInput {
     tool: {
       name,
       kind: TOOL_KINDS[name.toLowerCase()] ?? "other",
-      paths: paths.map((path) => (isAbsolute(path) ? path : resolve(cwd, path))),
+      // resolve também normaliza os absolutos: no Windows, /p/.env ganha o drive, e src/../.env não escapa das checagens.
+      paths: paths.map((path) => resolve(cwd, path)),
       command,
     },
   };

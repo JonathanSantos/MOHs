@@ -92,6 +92,8 @@ describe("hook input", () => {
     const copilot = readHookInput({ cwd: "/p", toolName: "view", toolArgs: '{"path":"/p/.env"}' }, "/x");
     assert.deepEqual(copilot.tool?.paths, [resolve("/p/.env")]);
     assert.equal(copilot.tool?.kind, "read");
+    const escaping = readHookInput({ cwd: "/p", tool_name: "Read", tool_input: { file_path: "/p/src/../.env" } }, "/x");
+    assert.deepEqual(escaping.tool?.paths, [resolve("/p/.env")]);
     const patch = readHookInput({ cwd: "/p", toolName: "apply_patch", toolArgs: { input: "*** Update File: src/b.ts\n@@" } }, "/x");
     assert.deepEqual(patch.tool?.paths, [resolve("/p/src/b.ts")]);
     assert.equal(readHookInput({ cwd: "/p", tool_name: "WebSearch", tool_input: {} }, "/x").tool?.kind, "other");
