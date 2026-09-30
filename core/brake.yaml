@@ -1,0 +1,7 @@
+# Política padrão do brake. `critical` sempre bloqueia, mesmo que alguma camada tente mudar.
+block: [critical, high]
+warn: [medium]
+ignore: [low]
+min_confidence: 80
+falls_before_rescue: 3
+inspection_rounds: 2

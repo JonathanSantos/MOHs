@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "lookout-demo",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["src/cli.ts", "climb", "--crew", "fake", "--cwd", "gym/demo", "--port", "4747"],
+      "port": 4747
+    }
+  ]
+}

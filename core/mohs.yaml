@@ -1,0 +1,64 @@
+# Padrões do núcleo do MOHs. Todo projeto herda isto; qualquer camada acima pode sobrescrever.
+
+# Provedores de modelo. Chaves de API vêm só de variáveis de ambiente, nunca de arquivos.
+# Um modelo sem prefixo é da Anthropic; os demais usam "provedor/modelo", ex.: moonshot/kimi-k2.7-code.
+providers:
+  anthropic: { type: anthropic }
+  moonshot: { type: openai-compatible, base_url: "https://api.moonshot.ai/v1", api_key_env: MOONSHOT_API_KEY }
+
+models:
+  scout: claude-sonnet-5-5
+  setter: claude-sonnet-5-5
+  belayer: claude-sonnet-5-5
+  climber: claude-sonnet-5-5
+  crux: claude-sonnet-5-5
+  inspector: claude-sonnet-5-5
+  scribe: claude-sonnet-5-5
+
+# Loop de agente: limite de turnos por tarefa, effort (Anthropic) e fallback automático em caso de recusa.
+agents:
+  max_turns: 40
+  effort: medium
+  fallbacks: true
+  max_o2_per_task: 300k
+
+commands:
+  timeout_s: 600
+
+rack:
+  scout: { o2: 2k }
+  setter: { o2: 4k }
+  belayer: { o2: 6k }
+  climber: { o2: 8k }
+  inspector: { o2: 3k }
+  scribe: { o2: 3k }
+
+hardness:
+  talc: { o2: 30k }
+  fluorite: { o2: 60k }
+  quartz: { o2: 400k, tests_per_scenario: 3 } # teto de casos de teste selados por cenário da line
+  diamond: { o2: 1.2M, tests_per_scenario: 5 }
+
+# Trilha talc (mohs fix): correção pequena, sem scout nem line; o humano assina no fim.
+# Código fora destes limites (testes não contam) ou num arquivo sensível pede o fluxo completo.
+talc:
+  max_files: 3
+  max_lines: 120
+  sensitive:
+    - "**/auth/**"
+    - "**/*auth.*"
+    - "**/*login*"
+    - "**/*password*"
+    - "**/*token*"
+    - "**/*secret*"
+    - "**/*crypt*"
+    - "**/*payment*"
+    - "**/billing/**"
+    - "**/checkout/**"
+    - "**/permissions/**"
+    - "**/migrations/**"
+    - "**/*.sql"
+    - "**/.env*"
+
+lookout:
+  port: 4747

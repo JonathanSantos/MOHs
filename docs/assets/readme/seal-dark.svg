@@ -1,0 +1,38 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 450" width="960" height="450" role="img" aria-label="O teste que o climber não vê: o belayer escreve os testes, o harness os guarda fora do projeto e roda num checkout separado, e o climber recebe só a FALL">
+<title>O teste que o climber não vê: o belayer escreve os testes, o harness os guarda fora do projeto e roda num checkout separado, e o climber recebe só a FALL</title>
+<rect width="960" height="450" rx="10" fill="#101214"/>
+<defs><marker id="head-E6E7E2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#E6E7E2"/></marker><marker id="head-F2685C" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#F2685C"/></marker><marker id="head-E3B04B" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#E3B04B"/></marker><marker id="head-FF6B30" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#FF6B30"/></marker></defs>
+<text x="40" y="52" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="28" font-weight="800" fill="#E6E7E2">O teste que o climber não vê</text>
+<text x="40" y="76" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#9CA3AA">nenhum outro harness pesquisado esconde os testes de quem implementa</text>
+<rect x="30" y="98" width="620" height="120" rx="8" fill="none" stroke="#E594AA" stroke-dasharray="4 4"/>
+<text x="46" y="118" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#E594AA">FORA DO ALCANCE DO CLIMBER</text>
+<rect x="46" y="124" width="280" height="92" rx="6" fill="#191C1F" stroke="#2E3237"/>
+<g transform="translate(62 140) scale(0.9166666666666666)" color="#E594AA"><path d="M12 3 L19.5 7.5 V16.5 L12 21 L4.5 16.5 V7.5 Z M12 3 V21 M4.5 7.5 L19.5 16.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></g>
+<text x="94" y="157" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="18" font-weight="800" fill="#E6E7E2">Belayer</text>
+<text x="62" y="184" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">escreve os testes da line num</text>
+<text x="62" y="201" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">checkout descartável; todos vermelhos</text>
+<rect x="356" y="124" width="280" height="92" rx="6" fill="#191C1F" stroke="#2E3237"/>
+<g transform="translate(372 140) scale(0.9166666666666666)" color="#E6E7E2"><path d="M12 3 L19.5 7.5 V16.5 L12 21 L4.5 16.5 V7.5 Z M12 3 V21 M4.5 7.5 L19.5 16.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></g>
+<text x="404" y="157" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="18" font-weight="800" fill="#E6E7E2">Seal guardado</text>
+<text x="372" y="184" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">~/.mohs/seals, fora do projeto</text>
+<text x="372" y="201" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">e de qualquer worktree</text>
+<rect x="46" y="290" width="280" height="92" rx="6" fill="#101214" stroke="#2E3237"/>
+<g transform="translate(62 306) scale(0.9166666666666666)" color="#FF6B30"><path d="M5 20 C9 16, 7 10, 12 9 S 16 6, 18.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18.5" cy="4.5" r="2" fill="currentColor"/></g>
+<text x="94" y="323" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="18" font-weight="800" fill="#E6E7E2">Climber</text>
+<text x="62" y="350" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">implementa no worktree da route;</text>
+<text x="62" y="367" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">o Basecamp faz o commit</text>
+<rect x="636" y="290" width="284" height="92" rx="6" fill="#191C1F" stroke="#2E3237"/>
+<g transform="translate(652 306) scale(0.9166666666666666)" color="#E6E7E2"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.6" fill="currentColor"/></g>
+<text x="684" y="323" font-family="Archivo, 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif" font-size="18" font-weight="800" fill="#E6E7E2">Send</text>
+<text x="652" y="350" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">checkout separado: código da</text>
+<text x="652" y="367" font-family="'IBM Plex Sans', 'Helvetica Neue', Arial, sans-serif" font-size="12.5" fill="#9CA3AA">route + testes selados, pelo harness</text>
+<path d="M 328 170 L 352 170" fill="none" stroke="#E6E7E2" stroke-width="1.8"  marker-end="url(#head-E6E7E2)"/>
+<path d="M 636 200 C 700 214, 760 250, 770 286" fill="none" stroke="#E6E7E2" stroke-width="1.8"  marker-end="url(#head-E6E7E2)"/>
+<path d="M 328 336 L 632 336" fill="none" stroke="#E6E7E2" stroke-width="1.8"  marker-end="url(#head-E6E7E2)"/>
+<text x="480" y="328" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">commit da route</text>
+<path d="M 700 384 C 620 410, 300 410, 200 386" fill="none" stroke="#F2685C" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#head-F2685C)"/>
+<text x="450" y="432" text-anchor="middle" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#F2685C">FALL: cenário, esperado, obtido · sem o teste (leak guard)</text>
+<path d="M 150 288 L 150 220" fill="none" stroke="#E3B04B" stroke-width="1.8" stroke-dasharray="5 4" marker-end="url(#head-E3B04B)"/>
+<text x="160" y="258" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" font-weight="600" fill="#E3B04B">dispute: contesta com a line</text>
+<text x="160" y="272" font-family="'Martian Mono', ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#9CA3AA">na 2ª vez, você decide</text>
+</svg>

@@ -1,0 +1,10 @@
+node_modules/
+reports/
+research_notes/
+docs/identidade.html
+package-lock.json
+**/.mohs/climbs/
+**/.mohs/git/
+.validation/
+gym/*/index.html
+gym/**/template/

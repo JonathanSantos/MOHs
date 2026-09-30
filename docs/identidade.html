@@ -1,0 +1,943 @@
+<title>Guia de campo do MOHs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: a página é um guia de campo — coluna larga de leitura; o diagrama do climb (lido de baixo para cima) é a peça central e o Lookout é um painel vivo */
+:root{
+  --chalk:#F3F4F1; --granite:#E7E8E3; --granite-2:#D9DBD4; --graphite:#1A1D20; --slate:#596068; --vein:#CBCDC6;
+  --rope:#E4531B;
+  --fluorite:#5E8F72; --fluorite-bg:#DDEBE2; --fluorite-fg:#244A36;
+  --quartz:#B85E76; --quartz-bg:#F4DEE4; --quartz-fg:#6E2539;
+  --diamond:#2A83A8; --diamond-bg:#D5ECF4; --diamond-fg:#114A63;
+  --ok:#2C7D52; --ok-bg:#DCEEE3; --warn:#94660B; --warn-bg:#F5E8C8; --crit:#B83227; --crit-bg:#F6DCD8;
+  --f-display:"Archivo","Arial Narrow","Helvetica Neue",Arial,sans-serif;
+  --f-body:"IBM Plex Sans","Helvetica Neue",Arial,sans-serif;
+  --f-mono:"Martian Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --chalk:#101214; --granite:#191C1F; --granite-2:#262A2E; --graphite:#E6E7E2; --slate:#9CA3AA; --vein:#2E3237;
+    --rope:#FF6B30;
+    --fluorite:#86C29E; --fluorite-bg:#1B2E23; --fluorite-fg:#BFE6CD;
+    --quartz:#E594AA; --quartz-bg:#35202A; --quartz-fg:#F7CCD8;
+    --diamond:#62BFE2; --diamond-bg:#132C37; --diamond-fg:#BCE5F4;
+    --ok:#5CC98E; --ok-bg:#16291F; --warn:#E3B04B; --warn-bg:#2E2512; --crit:#F2685C; --crit-bg:#34181A;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --chalk:#101214; --granite:#191C1F; --granite-2:#262A2E; --graphite:#E6E7E2; --slate:#9CA3AA; --vein:#2E3237;
+  --rope:#FF6B30;
+  --fluorite:#86C29E; --fluorite-bg:#1B2E23; --fluorite-fg:#BFE6CD;
+  --quartz:#E594AA; --quartz-bg:#35202A; --quartz-fg:#F7CCD8;
+  --diamond:#62BFE2; --diamond-bg:#132C37; --diamond-fg:#BCE5F4;
+  --ok:#5CC98E; --ok-bg:#16291F; --warn:#E3B04B; --warn-bg:#2E2512; --crit:#F2685C; --crit-bg:#34181A;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--chalk);color:var(--graphite);font:400 16px/1.6 var(--f-body);padding-inline:clamp(16px,4vw,48px);padding-block:0 72px}
+.wrap{max-width:1120px;margin-inline:auto}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--rope);outline-offset:3px}
+h1,h2,h3,h4{font-family:var(--f-display);margin:0;text-wrap:balance}
+h2{font-size:clamp(36px,5.4vw,60px);font-weight:800;font-stretch:68%;line-height:.95;letter-spacing:-.005em}
+h3{font-size:26px;font-weight:800;font-stretch:72%;line-height:1}
+h4{font-size:15px;font-weight:700;font-stretch:80%;letter-spacing:.02em}
+p{margin:0}
+code,.mono{font-family:var(--f-mono);font-size:.82em}
+.eyebrow{font:500 11px/1.4 var(--f-mono);letter-spacing:.14em;text-transform:uppercase;color:var(--slate)}
+.lede{max-width:64ch;color:var(--slate);font-size:17px;margin-top:18px}
+section.bloco{padding-top:96px}
+.sec-head{display:grid;gap:12px}
+
+/* Hero */
+.hero{padding-top:56px;display:grid;gap:28px}
+.wordmark{font:900 clamp(112px,24vw,280px)/.8 var(--f-display);font-stretch:62%;letter-spacing:-.02em;margin-left:-.02em}
+.wordmark .o{color:transparent;-webkit-text-stroke:.07em var(--rope)}
+.ruler{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;align-items:end}
+.tick{display:grid;gap:6px;min-width:0}
+.tick .bar{height:calc(6px + var(--h) * 8px);background:var(--granite-2)}
+.tick.on .bar{background:var(--min)}
+.tick b{font:500 12px/1 var(--f-mono);border-top:2px solid var(--graphite);padding-top:8px}
+.tick i{font:400 11px/1.3 var(--f-mono);font-style:normal;color:var(--slate);height:1.4em;white-space:nowrap;overflow:hidden}
+.tick.on i{color:var(--min-fg);font-weight:500}
+.t-fluorite{--min:var(--fluorite);--min-fg:var(--fluorite-fg)}
+.t-quartz{--min:var(--quartz);--min-fg:var(--quartz-fg)}
+.t-diamond{--min:var(--diamond);--min-fg:var(--diamond-fg)}
+@media (max-width:760px){.tick:not(.on) i{visibility:hidden}}
+.hero-copy{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.15fr);gap:24px 56px;align-items:start;margin-top:12px}
+.thesis{font:800 clamp(30px,3.6vw,42px)/1.02 var(--f-display);font-stretch:70%;text-wrap:balance}
+.hero-copy .txt{display:grid;gap:14px;color:var(--slate);max-width:60ch}
+.hero-copy .txt strong{color:var(--graphite);font-weight:600}
+@media (max-width:820px){.hero-copy{grid-template-columns:1fr}}
+.nav{display:flex;flex-wrap:wrap;gap:8px 22px;padding-block:18px;border-block:1px solid var(--vein);margin-top:8px}
+.nav a{font:500 12px var(--f-mono);text-decoration:none;color:var(--slate)}
+.nav a:hover{color:var(--rope)}
+
+/* Diagrama do climb */
+.topo{--code-w:64px;position:relative;display:flex;flex-direction:column-reverse;margin-top:44px}
+.topo::before{content:"";position:absolute;left:calc(var(--code-w) + 16px + 19px);top:28px;bottom:28px;width:3px;background:var(--rope);border-radius:2px}
+.lance{display:grid;grid-template-columns:var(--code-w) 40px minmax(0,1fr) auto;gap:0 16px;padding-block:20px;border-bottom:1px solid var(--vein);align-items:start}
+.lance:first-child{border-bottom:0}
+.lance .cod{font:500 12px/2.4 var(--f-mono);color:var(--slate)}
+.lance .mk{width:40px;height:40px;display:grid;place-items:center;background:var(--chalk);position:relative;z-index:1;color:var(--graphite)}
+.lance .mk svg{width:26px;height:26px}
+.lance .corpo{display:grid;gap:6px;min-width:0}
+.lance .nome{display:flex;flex-wrap:wrap;align-items:baseline;gap:4px 12px}
+.lance .nome h3{font-size:30px}
+.lance .quem{font:500 12px var(--f-mono);color:var(--slate)}
+.lance .desc{max-width:66ch}
+.lance .evt{font:400 11px var(--f-mono);color:var(--slate)}
+.lance .voce{font:500 11px var(--f-mono);color:var(--rope);letter-spacing:.04em}
+.queda-nota{display:flex;gap:10px;align-items:flex-start;margin-top:6px;padding:10px 12px;background:var(--crit-bg);color:var(--graphite);border-radius:3px;max-width:66ch;font-size:15px}
+.queda-nota svg{width:22px;height:22px;flex:none;color:var(--crit)}
+.durs{display:flex;gap:4px;padding-top:10px}
+.dur{width:22px;height:22px;display:grid;place-items:center;font:500 10px var(--f-mono);border:1.5px solid var(--min);color:var(--min-fg);border-radius:2px}
+.dur.on{background:var(--min-bg)}
+.dur.off{border-color:var(--vein);color:var(--vein)}
+.d-fluorite{--min:var(--fluorite);--min-bg:var(--fluorite-bg);--min-fg:var(--fluorite-fg)}
+.d-quartz{--min:var(--quartz);--min-bg:var(--quartz-bg);--min-fg:var(--quartz-fg)}
+.d-diamond{--min:var(--diamond);--min-bg:var(--diamond-bg);--min-fg:var(--diamond-fg)}
+.topo-leg{display:flex;flex-wrap:wrap;gap:8px 20px;margin-top:18px;font:400 12px var(--f-mono);color:var(--slate);align-items:center}
+.topo-leg span{display:inline-flex;gap:6px;align-items:center}
+@media (max-width:640px){
+  .topo{--code-w:0px}
+  .lance{grid-template-columns:40px minmax(0,1fr);gap:0 14px}
+  .lance .cod{display:none}
+  .topo::before{left:19px}
+  .durs{grid-column:2;padding-top:4px}
+}
+
+/* Hardness */
+.durezas{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px;margin-top:40px}
+@media (max-width:900px){.durezas{grid-template-columns:1fr}}
+.dureza{border:1px solid var(--vein);background:var(--granite);border-radius:4px;padding:22px;display:grid;gap:16px;align-content:start}
+.dureza header{display:flex;gap:16px;align-items:flex-end;padding-bottom:16px;border-bottom:2px solid var(--min)}
+.dureza .mohs{font:900 72px/.8 var(--f-display);font-stretch:62%;color:var(--min)}
+.dureza h3{font-size:34px}
+.cers{list-style:none;margin:0;padding:0;display:flex;flex-wrap:wrap;gap:6px}
+.cers li{font:500 11px/1 var(--f-mono);padding:6px 8px;border-radius:2px;border:1px solid var(--min);background:var(--min-bg);color:var(--min-fg)}
+.cers li.part{background:transparent;border-style:dashed}
+.cers li.off{background:transparent;border-color:var(--vein);color:var(--slate);text-decoration:line-through;text-decoration-color:var(--vein)}
+.specs{display:grid;gap:10px;margin:0}
+.specs div{display:grid;grid-template-columns:96px minmax(0,1fr);gap:12px}
+.specs dt{font:500 11px/1.8 var(--f-mono);color:var(--slate);text-transform:uppercase;letter-spacing:.08em}
+.specs dd{margin:0;font-size:15px}
+.regra{margin-top:22px;display:flex;gap:12px;align-items:center;font:500 13px var(--f-mono);color:var(--graphite)}
+.regra::before{content:"";width:28px;height:3px;background:var(--rope);flex:none}
+
+/* Lookout */
+.mirante{margin-top:40px;border:1px solid var(--vein);background:var(--granite);border-radius:6px;overflow:hidden}
+.mir-top{display:flex;flex-wrap:wrap;gap:16px 28px;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--vein);background:var(--chalk)}
+.mir-id{display:grid;gap:2px}
+.mir-id strong{font:800 22px/1 var(--f-display);font-stretch:70%}
+.mir-id span{font:400 12px var(--f-mono);color:var(--slate)}
+.mir-metrics{display:flex;flex-wrap:wrap;gap:12px 24px;align-items:center}
+.metric{display:grid;gap:2px;font-variant-numeric:tabular-nums}
+.metric span{font:500 10px var(--f-mono);letter-spacing:.1em;text-transform:uppercase;color:var(--slate)}
+.metric b{font:500 16px var(--f-mono)}
+.metric.o2{grid-template-columns:auto auto;column-gap:10px;align-items:end}
+.metric.o2 span{grid-column:1 / -1}
+.gauge{display:block;width:110px;height:8px;background:var(--granite-2);border-radius:4px;overflow:hidden;align-self:center}
+.gauge i{display:block;height:100%;width:0;background:var(--rope)}
+.metric small{grid-column:1 / -1;font:400 11px var(--f-mono);color:var(--slate)}
+.mir-ctrl{display:flex;gap:8px}
+.btn{font:500 12px var(--f-mono);border:1px solid var(--graphite);background:transparent;color:var(--graphite);padding:7px 12px;border-radius:3px;cursor:pointer}
+.btn:hover{background:var(--graphite);color:var(--chalk)}
+.mir-body{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,1fr)}
+@media (max-width:900px){.mir-body{grid-template-columns:1fr}}
+.parede-wrap{padding:18px;border-right:1px solid var(--vein);display:grid;gap:12px;align-content:start}
+@media (max-width:900px){.parede-wrap{border-right:0;border-bottom:1px solid var(--vein)}}
+#parede{width:100%;height:auto;display:block}
+.vias-legenda{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px}
+.vl{display:grid;gap:4px;justify-items:center;text-align:center;min-width:0}
+.vl-id{font:800 20px/1 var(--f-display);font-stretch:70%}
+.vl b{font-size:13px;font-weight:600;line-height:1.3}
+.chip{font:500 10px/1 var(--f-mono);padding:4px 6px;border-radius:2px;background:var(--min-bg);color:var(--min-fg);border:1px solid var(--min)}
+.vl-estado{font:500 11px var(--f-mono);color:var(--rope)}
+.vl-o2{font:400 11px var(--f-mono);color:var(--slate);font-variant-numeric:tabular-nums}
+.medias{font:400 11px var(--f-mono);color:var(--slate);text-align:center}
+.painel{display:grid;align-content:start}
+.painel section{padding:16px 18px;border-bottom:1px solid var(--vein);display:grid;gap:10px}
+.painel section:last-child{border-bottom:0}
+.feed{list-style:none;margin:0;padding:0;display:grid;gap:8px;min-height:292px;align-content:start}
+.feed li{display:grid;grid-template-columns:44px minmax(0,1fr);gap:10px;font-size:13px;line-height:1.4}
+.feed .hora{font:400 11px/1.7 var(--f-mono);color:var(--slate);font-variant-numeric:tabular-nums}
+.feed .linha{display:flex;flex-wrap:wrap;gap:4px 8px;align-items:baseline;min-width:0}
+.feed .rota{font:400 11px var(--f-mono);color:var(--slate)}
+.feed .txt{flex-basis:100%}
+.voz{font:500 10px/1 var(--f-mono);padding:4px 6px;border-radius:2px;border:1px solid var(--vein);color:var(--graphite);letter-spacing:.06em}
+.voz.v-SAFE,.voz.v-sent,.voz.v-summit{background:var(--ok-bg);border-color:var(--ok);color:var(--ok)}
+.voz.v-FALL,.voz.v-report{background:var(--crit-bg);border-color:var(--crit);color:var(--crit)}
+.voz.v-ROCK,.voz.v-friction{background:var(--warn-bg);border-color:var(--warn);color:var(--warn)}
+.voz.v-CLIMB{border-color:var(--graphite)}
+.voz.v-send,.voz.v-inspection,.voz.v-basecamp,.voz.v-descent{color:var(--slate)}
+.feed li.novo{animation:entra .35s ease-out}
+@keyframes entra{from{opacity:0;transform:translateY(-4px)}to{opacity:1;transform:none}}
+.laudo,.atrito-lista{list-style:none;margin:0;padding:0;display:grid;gap:8px;font-size:13px;line-height:1.4}
+.laudo li{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:baseline}
+.laudo .sev{font:500 10px/1 var(--f-mono);padding:4px 6px;border-radius:2px}
+.sev.high{background:var(--crit-bg);color:var(--crit)}
+.sev.medium{background:var(--warn-bg);color:var(--warn)}
+.sev.low{background:var(--granite-2);color:var(--slate)}
+.laudo .acao{font:500 10px var(--f-mono);color:var(--slate);text-transform:uppercase;letter-spacing:.08em}
+.laudo li.corrigida .txt{text-decoration:line-through;color:var(--slate)}
+.laudo li.corrigida .acao{color:var(--ok)}
+.vazio{font-size:13px;color:var(--slate)}
+.atrito-lista li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:10px;align-items:center}
+.atrito-lista .hx{width:18px;height:12px;background:repeating-linear-gradient(45deg,var(--slate) 0 1.5px,transparent 1.5px 4px)}
+.atrito-lista .n{font:500 12px var(--f-mono)}
+/* parede svg */
+.via-fluorite{--min:var(--fluorite)} .via-quartz{--min:var(--quartz)} .via-diamond{--min:var(--diamond)}
+.via-linha{stroke:var(--min);stroke-width:2.5;opacity:.7}
+.corda{stroke:var(--rope);stroke-width:4;stroke-linecap:round}
+.parada{fill:var(--chalk);stroke:var(--graphite);stroke-width:1.6}
+.ancora-ext{fill:var(--chalk);stroke:var(--graphite);stroke-width:1.6}
+.ancora-int{fill:var(--graphite)}
+.halo{fill:none;stroke:var(--rope);stroke-width:2;opacity:0;transform-box:fill-box;transform-origin:center}
+.grampo{stroke:var(--slate);stroke-width:1.6;fill:none;stroke-linecap:round}
+.barraca{fill:none;stroke:var(--graphite);stroke-width:1.6;stroke-linejoin:round}
+.mastro{stroke:var(--graphite);stroke-width:1.6}
+.bandeira{fill:var(--granite-2);stroke:var(--graphite);stroke-width:1.2;transition:fill .4s}
+.via.no-cume .bandeira{fill:var(--min)}
+.guia-dot{fill:var(--rope);stroke:var(--chalk);stroke-width:2.5;transition:fill .2s}
+.via.caindo .guia-dot{fill:var(--crit)}
+.via.no-cume .guia-dot{fill:var(--min)}
+.hachura-traco{fill:var(--slate)}
+.atrito-rect{fill:url(#hachura)}
+@media (prefers-reduced-motion:no-preference){
+  .ancora.ativa .halo{animation:pulso 1.2s ease-out infinite}
+}
+@keyframes pulso{from{opacity:.9;transform:scale(1)}to{opacity:0;transform:scale(2.4)}}
+
+/* Calls */
+.tabela{overflow-x:auto;margin-top:36px;border-top:2px solid var(--graphite)}
+table{border-collapse:collapse;width:100%;min-width:640px}
+th,td{text-align:left;padding:12px 14px 12px 0;border-bottom:1px solid var(--vein);vertical-align:top;font-size:15px}
+th{font:500 11px var(--f-mono);text-transform:uppercase;letter-spacing:.1em;color:var(--slate)}
+td .voz{font-size:11px}
+td.rota,td.campos{font:400 12px/1.6 var(--f-mono);color:var(--slate)}
+.exemplo{margin-top:18px;padding:14px 16px;background:var(--granite);border-radius:4px;font:400 12px/1.7 var(--f-mono);overflow-x:auto;white-space:pre}
+
+/* O2 */
+.regras{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:0 48px;margin-top:36px}
+@media (max-width:760px){.regras{grid-template-columns:1fr}}
+.regras article{display:grid;grid-template-columns:40px minmax(0,1fr);gap:4px 12px;padding-block:18px;border-top:1px solid var(--vein)}
+.regras .cil{grid-row:span 2;width:24px;height:36px;border:1.6px solid var(--graphite);border-radius:7px 7px 4px 4px;position:relative;margin-top:4px}
+.regras .cil::before{content:"";position:absolute;left:6px;right:6px;top:-6px;height:5px;border:1.6px solid var(--graphite);border-bottom:0;border-radius:2px 2px 0 0}
+.regras .cil::after{content:"";position:absolute;left:3px;right:3px;bottom:3px;height:var(--n);background:var(--rope);border-radius:2px}
+.regras h4{font-size:20px;font-stretch:74%;font-weight:800}
+.regras p{color:var(--slate);font-size:15px;max-width:52ch}
+
+/* Léxico */
+.lexico{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 56px;margin-top:40px}
+@media (max-width:820px){.lexico{grid-template-columns:1fr}}
+.grupo h3{font-size:22px;padding-bottom:10px;border-bottom:2px solid var(--graphite);margin-bottom:4px}
+.grupo dl{margin:0;display:grid}
+.grupo dl div{display:grid;grid-template-columns:128px minmax(0,1fr);gap:4px 16px;padding-block:10px;border-bottom:1px solid var(--vein)}
+.grupo dt{font:800 19px/1.2 var(--f-display);font-stretch:74%}
+.grupo dd{margin:0;font-size:14px;line-height:1.5}
+.grupo dd .comum{display:block;font:400 11px var(--f-mono);color:var(--slate);margin-top:2px}
+@media (max-width:480px){.grupo dl div{grid-template-columns:1fr}}
+
+/* Identidade */
+.swatches{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px;margin-top:40px}
+@media (max-width:760px){.swatches{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.sw{display:grid;gap:8px}
+.sw i{display:block;height:84px;border-radius:3px;border:1px solid var(--vein)}
+.sw b{font:800 18px/1 var(--f-display);font-stretch:74%}
+.sw span{font:400 12px/1.4 var(--f-mono);color:var(--slate)}
+.id-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:40px 56px;margin-top:56px}
+@media (max-width:820px){.id-grid{grid-template-columns:1fr}}
+.id-grid > div{display:grid;gap:14px;align-content:start;min-width:0}
+.id-grid h3{font-size:22px;padding-bottom:10px;border-bottom:2px solid var(--graphite)}
+.espec{display:grid;gap:6px;padding-block:8px;border-bottom:1px solid var(--vein)}
+.espec .amostra-d{font:800 44px/1 var(--f-display);font-stretch:66%}
+.espec .amostra-b{font:400 18px/1.5 var(--f-body)}
+.espec .amostra-m{font:400 14px/1.6 var(--f-mono)}
+.espec small{font:400 11px var(--f-mono);color:var(--slate)}
+.simbolos{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px 18px}
+.simbolos div{display:grid;grid-template-columns:30px minmax(0,1fr);gap:10px;align-items:center;font-size:14px}
+.simbolos svg{width:26px;height:26px;color:var(--graphite)}
+.simbolos .hx{width:24px;height:18px;background:repeating-linear-gradient(45deg,var(--slate) 0 1.5px,transparent 1.5px 4px)}
+.mov{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.mov li{display:grid;grid-template-columns:120px minmax(0,1fr);gap:12px;font-size:15px;padding-bottom:10px;border-bottom:1px solid var(--vein)}
+.mov b{font:500 12px/1.9 var(--f-mono);color:var(--rope)}
+.term{background:#15181B;color:#DADDD6;border-radius:4px;padding:16px 18px;font:400 12.5px/1.75 var(--f-mono);overflow-x:auto;white-space:pre}
+.term .p{color:#FF7A40}
+.term .k{color:#8C949C}
+.term .c{color:#6FC3E3}
+.term .t{color:#8FC7A4}
+.nomes{list-style:none;margin:0;padding:0;display:grid;gap:10px}
+.nomes li{display:grid;grid-template-columns:28px minmax(0,1fr);gap:10px;font-size:15px}
+.nomes li::before{content:"";width:18px;height:3px;background:var(--rope);margin-top:11px}
+footer{margin-top:96px;padding-top:18px;border-top:1px solid var(--vein);display:flex;flex-wrap:wrap;gap:8px 24px;justify-content:space-between;font:400 12px var(--f-mono);color:var(--slate)}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="m-base" viewBox="0 0 24 24"><path d="M3.5 19.5 L12 5 L20.5 19.5 Z M12 19.5 V13.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="m-croqui" viewBox="0 0 24 24"><rect x="4" y="5" width="16" height="14" rx="1" fill="none" stroke="currentColor" stroke-width="1.6" stroke-dasharray="3 2"/><path d="M7 16 L10 11 L13 13.5 L17 8" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></symbol>
+  <symbol id="m-tracado" viewBox="0 0 24 24"><path d="M5 20 C9 16, 7 10, 12 9 S 16 6, 18.5 4.5" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="18.5" cy="4.5" r="2" fill="currentColor"/></symbol>
+  <symbol id="m-grampo" viewBox="0 0 24 24"><path d="M7 7 L17 17 M17 7 L7 17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/></symbol>
+  <symbol id="m-selo" viewBox="0 0 24 24"><path d="M12 3 L19.5 7.5 V16.5 L12 21 L4.5 16.5 V7.5 Z M12 3 V21 M4.5 7.5 L19.5 16.5" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></symbol>
+  <symbol id="m-parada" viewBox="0 0 24 24"><circle cx="12" cy="12" r="6" fill="none" stroke="currentColor" stroke-width="2"/></symbol>
+  <symbol id="m-cadena" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.6" fill="currentColor"/></symbol>
+  <symbol id="m-vistoria" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.6"/><circle cx="8.4" cy="12" r="1.5" fill="currentColor"/><circle cx="12" cy="12" r="1.5" fill="currentColor"/><circle cx="15.6" cy="12" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="m-cume" viewBox="0 0 24 24"><path d="M7 21 V3.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"/><path d="M7 4 L18.5 7.5 L7 11 Z" fill="currentColor"/></symbol>
+  <symbol id="m-descida" viewBox="0 0 24 24"><path d="M7 5 L12 10 L17 5 M7 12.5 L12 17.5 L17 12.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+  <symbol id="m-queda" viewBox="0 0 24 24"><path d="M12 2.5 L8 7.5 L15 10.5 L9 15.5 L12 20.5 M9 17.5 L12 20.5 L15 17.5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></symbol>
+</svg>
+
+<header class="hero wrap">
+  <p class="eyebrow">My Own Harness System · proposta de identidade · setembro de 2026</p>
+  <h1 class="wordmark" aria-label="MOHs">M<span class="o">O</span>Hs</h1>
+  <div class="ruler" role="img" aria-label="Escala de Mohs de 1 a 10. Fluorite (4), quartz (7) e diamond (10) são as três hardness do MOHs.">
+    <div class="tick" style="--h:1"><span class="bar"></span><b>1</b><i>talc</i></div>
+    <div class="tick" style="--h:2"><span class="bar"></span><b>2</b><i>gypsum</i></div>
+    <div class="tick" style="--h:3"><span class="bar"></span><b>3</b><i>calcite</i></div>
+    <div class="tick on t-fluorite" style="--h:4"><span class="bar"></span><b>4</b><i>fluorite</i></div>
+    <div class="tick" style="--h:5"><span class="bar"></span><b>5</b><i>apatite</i></div>
+    <div class="tick" style="--h:6"><span class="bar"></span><b>6</b><i>orthoclase</i></div>
+    <div class="tick on t-quartz" style="--h:7"><span class="bar"></span><b>7</b><i>quartz</i></div>
+    <div class="tick" style="--h:8"><span class="bar"></span><b>8</b><i>topaz</i></div>
+    <div class="tick" style="--h:9"><span class="bar"></span><b>9</b><i>corundum</i></div>
+    <div class="tick on t-diamond" style="--h:10"><span class="bar"></span><b>10</b><i>diamond</i></div>
+  </div>
+  <div class="hero-copy">
+    <p class="thesis">Arnês para agentes de código. Duro como diamante, leve em tokens.</p>
+    <div class="txt">
+      <p>O nome é a pista. MOHs, de My Own Harness System, se lê como <strong>Mohs</strong>, a escala que mede a dureza dos minerais. E harness, na escalada, é a <strong>cadeirinha</strong>, o equipamento que segura quem sobe. O vocabulário inteiro sai daí: cada pedido é um <strong>climb</strong>, cada feature é uma <strong>route</strong>, e a <strong>hardness</strong> define quanto rigor o harness aplica.</p>
+      <p>BMAD e AI-DLC sobem em estilo expedição, com muitos acampamentos, muita corda fixa e muito documento. O MOHs sobe em <strong>alpine style</strong>: leva pouco, gasta pouco oxigênio e não abre mão da segurança.</p>
+    </div>
+  </div>
+  <nav class="nav" aria-label="Seções">
+    <a href="#fluxo">Fluxo</a><a href="#hardness">Hardness</a><a href="#lookout">Lookout</a><a href="#calls">Calls</a><a href="#oxigenio">O₂</a><a href="#lexico">Léxico</a><a href="#identidade">Identidade</a>
+  </nav>
+</header>
+
+<main class="wrap">
+
+<section class="bloco" id="fluxo">
+  <div class="sec-head">
+    <p class="eyebrow">Fluxo</p>
+    <h2>Um climb, do basecamp ao summit</h2>
+    <p class="lede">Leia de baixo para cima, como o desenho de uma via. Cada etapa é um estado da state machine e um evento no log. Os quadradinhos à direita mostram em quais hardness a etapa acontece: F de fluorite, Q de quartz, D de diamond.</p>
+  </div>
+
+  <div class="topo">
+    <div class="lance">
+      <span class="cod">base</span>
+      <span class="mk"><svg><use href="#m-base"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Scout</h3><span class="quem">Basecamp + LLM</span></div>
+        <p class="desc">Lê o pedido e o repositório. Decide se é <strong>first ascent</strong> (via nova, greenfield) ou <strong>variation</strong> (código existente, brownfield) e propõe a hardness.</p>
+        <span class="evt">scout.hardness</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite on">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">L1</span>
+      <span class="mk"><svg><use href="#m-croqui"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Survey</h3><span class="quem">Basecamp, sem LLM</span></div>
+        <p class="desc">Mapa do código existente: estrutura, comandos, padrões e pontos de entrada. É montado por código, então a coleta não gasta tokens. Só acontece em variation.</p>
+        <span class="evt">survey.ready</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite off">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">L2</span>
+      <span class="mk"><svg><use href="#m-tracado"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Line</h3><span class="quem">Setter</span><span class="voce">você assina</span></div>
+        <p class="desc">A spec: problema, capacidades, restrições, o que fica de fora, sinal de sucesso e cenários QUANDO/ENTÃO. A assinatura vale para o hash do conteúdo. Se o texto mudar depois, a assinatura cai.</p>
+        <span class="evt">line.signed</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite on">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">L3</span>
+      <span class="mk"><svg><use href="#m-grampo"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Bolts</h3><span class="quem">Setter</span></div>
+        <p class="desc">O contrato de interface: assinaturas, rotas, payloads e <code>data-testid</code>. São os pontos fixos que o climber e o belayer enxergam em comum. Em diamond, você assina os bolts também.</p>
+        <span class="evt">bolts.set</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite off">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">L4</span>
+      <span class="mk"><svg><use href="#m-selo"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Seal</h3><span class="quem">Belayer</span></div>
+        <p class="desc">O belayer escreve os testes unitários e e2e a partir da line e dos bolts. Todo teste selado precisa falhar no código atual, senão não prova nada. A suíte fica fora do worktree do climber.</p>
+        <span class="evt">seal.red</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite off">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">L5–Ln</span>
+      <span class="mk"><svg><use href="#m-parada"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Pitches</h3><span class="quem">Climber</span></div>
+        <p class="desc">O climber implementa uma task por vez, com contexto novo e o pack que o Basecamp montou. Cada pitch termina numa <strong>anchor</strong>: typecheck, lint e os testes do próprio climber, rodados pelo harness, e um commit de proteção.</p>
+        <span class="evt">pitch.anchor</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite on">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">top</span>
+      <span class="mk"><svg><use href="#m-cadena"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Send</h3><span class="quem">Basecamp + Belayer</span></div>
+        <p class="desc">Os testes selados rodam num checkout separado. Passou: a route foi <strong>sent</strong>.</p>
+        <div class="queda-nota"><svg><use href="#m-queda"/></svg><span>Falhou: <strong>fall</strong>. O climber volta à última anchor e o belayer descreve o comportamento esperado e o obtido, sem mostrar o teste. Na terceira fall, o Basecamp chama o <strong>rescue</strong>, que é você.</span></div>
+        <span class="evt">send.clean · send.fall</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite off">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">top</span>
+      <span class="mk"><svg><use href="#m-vistoria"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Inspection</h3><span class="quem">Inspectors</span></div>
+        <p class="desc">Segurança, arquitetura e UI em paralelo, uma vez por route e só os que o diff aciona. Cada inspector grava seu report. O brake lê os reports e decide o que bloqueia.</p>
+        <span class="evt">inspection.report</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite off">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">summit</span>
+      <span class="mk"><svg><use href="#m-cume"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Summit</h3><span class="quem">Basecamp</span></div>
+        <p class="desc">Entrega: merge do worktree e relatório com as evidências (recibo do send, reports, tempo e oxigênio gasto).</p>
+        <span class="evt">route.summit</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite on">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+    <div class="lance">
+      <span class="cod">down</span>
+      <span class="mk"><svg><use href="#m-descida"/></svg></span>
+      <div class="corpo">
+        <div class="nome"><h3>Descent</h3><span class="quem">Scribe</span><span class="voce">você escolhe</span></div>
+        <p class="desc">O scribe lê a friction do climb e propõe beta novo, sempre com evidência citada. Você escolhe o que entra. O que entrar vale a partir do próximo climb.</p>
+        <span class="evt">descent.beta</span>
+      </div>
+      <div class="durs"><span class="dur d-fluorite off">F</span><span class="dur d-quartz on">Q</span><span class="dur d-diamond on">D</span></div>
+    </div>
+  </div>
+  <div class="topo-leg" aria-hidden="true">
+    <span><span class="dur d-quartz on">Q</span> acontece nessa hardness</span>
+    <span><span class="dur d-quartz off">Q</span> não acontece</span>
+    <span>linha laranja: a corda do climber</span>
+  </div>
+</section>
+
+<section class="bloco" id="hardness">
+  <div class="sec-head">
+    <p class="eyebrow">Hardness</p>
+    <h2>Três trilhas, uma régua</h2>
+    <p class="lede">O Scout mede o pedido e propõe uma hardness. Você pode escolher outra com <code>--hardness</code>. As três ficam em 4, 7 e 10 na escala, com o mesmo passo entre elas. Durante o climb a hardness só sobe: se a route se mostrar mais arriscada que o previsto, o Basecamp endurece o processo e avisa no Lookout.</p>
+  </div>
+  <div class="durezas">
+    <article class="dureza d-fluorite">
+      <header><span class="mohs">4</span><div><p class="eyebrow">mohs 4</p><h3>Fluorite</h3></div></header>
+      <p>Mudança pequena e clara: até 3 arquivos, nenhuma área sensível. Um texto, um ajuste de estilo, um bug de poucas linhas.</p>
+      <ul class="cers" aria-label="Etapas em fluorite">
+        <li>Scout</li><li class="off">Survey</li><li class="part">Line curta</li><li class="off">Bolts</li><li class="part">Seal: 1 teste de reprodução, em bug</li><li>1 pitch</li><li class="part">Send: só a reprodução</li><li class="off">Inspection</li><li>Summit</li><li class="off">Descent</li>
+      </ul>
+      <dl class="specs">
+        <div><dt>O₂</dt><dd>60 mil tokens</dd></div>
+        <div><dt>Você</dt><dd>assina a line curta com uma tecla</dd></div>
+        <div><dt>Anchor</dt><dd>suíte existente rodada pelo harness (no projeto de exemplo, <code>test:quick</code>)</dd></div>
+        <div><dt>Modelos</dt><dd>climber no modelo mais barato que passa no gym</dd></div>
+      </dl>
+    </article>
+    <article class="dureza d-quartz">
+      <header><span class="mohs">7</span><div><p class="eyebrow">mohs 7 · padrão</p><h3>Quartz</h3></div></header>
+      <p>O padrão para features. Uma ou mais routes com comportamento novo, sem tocar em autenticação, dados pessoais ou pagamentos.</p>
+      <ul class="cers" aria-label="Etapas em quartz">
+        <li>Scout</li><li class="part">Survey, em variation</li><li>Line</li><li>Bolts</li><li>Seal</li><li>Pitches</li><li>Send</li><li class="part">Inspection: só quem o diff aciona</li><li>Summit</li><li>Descent</li>
+      </ul>
+      <dl class="specs">
+        <div><dt>O₂</dt><dd>400 mil tokens</dd></div>
+        <div><dt>Você</dt><dd>assina a line e escolhe os betas do descent</dd></div>
+        <div><dt>Falls</dt><dd>3 antes do rescue</dd></div>
+        <div><dt>Modelos</dt><dd>Sonnet 5.5 na line, no seal e no crux; Kimi k2.7-code nos outros pitches</dd></div>
+      </dl>
+    </article>
+    <article class="dureza d-diamond">
+      <header><span class="mohs">10</span><div><p class="eyebrow">mohs 10</p><h3>Diamond</h3></div></header>
+      <p>Área sensível ou climb grande: autenticação, dados pessoais, pagamentos, migrações, links públicos ou mais de 3 routes.</p>
+      <ul class="cers" aria-label="Etapas em diamond">
+        <li>Scout</li><li>Survey</li><li>Line</li><li>Bolts assinados</li><li>Seal</li><li>Pitches</li><li>Send + suíte completa</li><li>Inspection: todos, modelo cruzado</li><li>Summit assinado</li><li>Descent</li>
+      </ul>
+      <dl class="specs">
+        <div><dt>O₂</dt><dd>1,2 milhão de tokens</dd></div>
+        <div><dt>Você</dt><dd>assina line, bolts e summit; escolhe os betas</dd></div>
+        <div><dt>Send</dt><dd>testes selados e também a suíte inteira do projeto (<code>test:full</code>)</dd></div>
+        <div><dt>Modelos</dt><dd>como no quartz, e cada inspector roda num modelo diferente do climber</dd></div>
+      </dl>
+    </article>
+  </div>
+  <p class="regra">A hardness só sobe. Nunca desce sozinha.</p>
+</section>
+
+<section class="bloco" id="lookout">
+  <div class="sec-head">
+    <p class="eyebrow">Lookout</p>
+    <h2>O painel de onde você vê a parede</h2>
+    <p class="lede">Três routes de um editor de protótipos de exemplo sobem ao mesmo tempo numa window. Os dados são de exemplo. A corda laranja é o progresso do climber, cada círculo é uma anchor com commit, a textura ao lado da route marca onde houve friction e uma fall devolve o climber à última anchor.</p>
+  </div>
+  <div class="mirante">
+    <div class="mir-top">
+      <div class="mir-id"><strong>Lookout</strong><span>editor-demo · window 1 · 3 routes sem arquivos em comum</span></div>
+      <div class="mir-metrics">
+        <div class="metric"><span>tempo</span><b id="m-tempo">00:00</b></div>
+        <div class="metric o2"><span>O₂ gasto</span><b id="m-o2">0k</b><i class="gauge" aria-hidden="true"><i id="m-o2-bar"></i></i><small>de 1,66M no cilindro</small></div>
+        <div class="metric"><span>falls</span><b id="m-quedas">0</b></div>
+        <div class="metric"><span>friction</span><b id="m-atritos">0</b></div>
+      </div>
+      <div class="mir-ctrl"><button class="btn" id="m-play" type="button">Pausar</button><button class="btn" id="m-reset" type="button">Recomeçar</button></div>
+    </div>
+    <div class="mir-body">
+      <div class="parede-wrap">
+        <svg id="parede" viewBox="0 0 540 396" role="img" aria-label="Parede com três routes: A em diamond, B em quartz e C em fluorite, com os climbers subindo">
+          <defs><pattern id="hachura" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="1.8" height="5" class="hachura-traco"/></pattern></defs>
+        </svg>
+        <div class="vias-legenda" id="vias-legenda"></div>
+        <p class="medias">média histórica até o summit: fluorite 11 min · quartz 31 min · diamond 46 min</p>
+      </div>
+      <div class="painel">
+        <section aria-label="Calls"><h4>Calls</h4><ol class="feed" id="feed"></ol></section>
+        <section aria-label="Report"><h4>Report</h4><ul class="laudo" id="laudo"><li class="vazio">Nenhum report ainda. Os inspectors gravam aqui quando uma route é sent.</li></ul></section>
+        <section aria-label="Friction"><h4>Friction</h4><ul class="atrito-lista" id="atrito"><li class="vazio">Sem friction até agora.</li></ul></section>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="bloco" id="calls">
+  <div class="sec-head">
+    <p class="eyebrow">Calls</p>
+    <h2>Seis calls, nenhuma conversa</h2>
+    <p class="lede">Na escalada, a dupla usa vozes curtas e combinadas, porque ninguém discute pendurado na parede. Entre os agentes do MOHs é igual: mensagens tipadas, com campos fixos e sem prosa. Isso economiza tokens e deixa o Basecamp validar cada mensagem. Uma FALL nunca carrega código de teste, só o cenário, o esperado e o obtido.</p>
+  </div>
+  <div class="tabela">
+    <table>
+      <thead><tr><th>Call</th><th>De → para</th><th>Quando</th><th>Campos</th></tr></thead>
+      <tbody>
+        <tr><td><span class="voz v-CLIMB">CLIMB</span></td><td class="rota">basecamp → climber</td><td>O pitch está liberado e o pack está pronto.</td><td class="campos">route, pitch, pack</td></tr>
+        <tr><td><span class="voz v-SAFE">SAFE</span></td><td class="rota">climber → basecamp</td><td>O climber chegou na anchor e pede a checagem.</td><td class="campos">route, pitch, summary ≤ 280</td></tr>
+        <tr><td><span class="voz v-FALL">FALL</span></td><td class="rota">belayer → climber</td><td>Um teste selado falhou no send.</td><td class="campos">scenario, expected, actual</td></tr>
+        <tr><td><span class="voz">WATCH</span></td><td class="rota">climber → basecamp</td><td>A line está ambígua ou se contradiz. É o canal formal para o climber dizer que a spec não fecha, em vez de contornar o teste.</td><td class="campos">excerpt, question</td></tr>
+        <tr><td><span class="voz v-ROCK">ROCK</span></td><td class="rota">qualquer → basecamp</td><td>Problema de ambiente que atinge todo mundo: porta ocupada, dependência quebrada, serviço fora.</td><td class="campos">command, error</td></tr>
+        <tr><td><span class="voz">TAKE</span></td><td class="rota">basecamp → você</td><td>Rescue: o climb precisa de uma decisão humana.</td><td class="campos">reason, options</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="exemplo">{"call":"FALL","route":"B","scenario":"exportar com zoom 200%","expected":"largura 1440 px","actual":"largura 2880 px"}</div>
+</section>
+
+<section class="bloco" id="oxigenio">
+  <div class="sec-head">
+    <p class="eyebrow">Alpine style</p>
+    <h2>Oxigênio contado</h2>
+    <p class="lede">Token é oxigênio. Cada climb leva um cilindro do tamanho da sua hardness, e cada etapa tem sua cota. O Lookout mostra o consumo em tempo real. Oito regras mantêm o pack leve.</p>
+  </div>
+  <div class="regras">
+    <article><span class="cil" style="--n:22px" aria-hidden="true"></span><h4>Pack, não histórico</h4><p>Cada agente recebe só o pacote que o Basecamp montou: beta filtrado por papel e por glob, a fatia do survey que importa e os bolts. Nunca a conversa anterior.</p></article>
+    <article><span class="cil" style="--n:18px" aria-hidden="true"></span><h4>Pitch curto, contexto novo</h4><p>Uma task cabe em 20 a 30% da janela de contexto. Cada pitch começa limpo e termina com um handoff em arquivo.</p></article>
+    <article><span class="cil" style="--n:14px" aria-hidden="true"></span><h4>Modelo forte só no crux</h4><p>Line, seal e o pitch crux vão no modelo mais forte. O resto vai no mais barato que passa no gym.</p></article>
+    <article><span class="cil" style="--n:20px" aria-hidden="true"></span><h4>Código antes do modelo</h4><p>Survey, comandos, leitura do resultado dos testes e agregação dos reports são feitos pelo Basecamp. Do log de teste, o agente recebe só a asserção que falhou.</p></article>
+    <article><span class="cil" style="--n:12px" aria-hidden="true"></span><h4>Calls curtas</h4><p>Entre agentes, mensagens tipadas com campos fixos. Prosa só onde um humano vai ler.</p></article>
+    <article><span class="cil" style="--n:16px" aria-hidden="true"></span><h4>Inspection sob demanda</h4><p>Uma vez por route, só os inspectors que o diff aciona, e cada um lendo só o diff. O de UI não sobe se nenhum componente React mudou.</p></article>
+    <article><span class="cil" style="--n:24px" aria-hidden="true"></span><h4>Prefixo estável</h4><p>Instruções e beta vêm primeiro e sempre na mesma ordem, para aproveitar o cache de prompt. O que muda a cada chamada vai no fim.</p></article>
+    <article><span class="cil" style="--n:8px" aria-hidden="true"></span><h4>Cilindro com teto</h4><p>Se uma etapa estoura a cota, o Basecamp para e decide entre subir a hardness e chamar o rescue. O agente nunca segue gastando por conta própria.</p></article>
+  </div>
+</section>
+
+<section class="bloco" id="lexico">
+  <div class="sec-head">
+    <p class="eyebrow">Léxico</p>
+    <h2>Palavras do MOHs</h2>
+    <p class="lede">Cada nome é um termo curto, em inglês, do mundo da escalada ou dos minerais. A CLI e o Lookout mostram o termo comum ao lado, para quem nunca escalou. No código e nos eventos, os nomes são os mesmos, como em <code>line.signed</code>.</p>
+  </div>
+  <div class="lexico">
+    <div class="grupo">
+      <h3>Fluxo</h3>
+      <dl>
+        <div><dt>Climb</dt><dd>Um pedido, do início ao fim.<span class="comum">run</span></dd></div>
+        <div><dt>Scout</dt><dd>Lê o pedido e o repositório e escolhe a hardness.<span class="comum">triagem</span></dd></div>
+        <div><dt>First ascent</dt><dd>Abrir uma via onde não havia nada.<span class="comum">greenfield</span></dd></div>
+        <div><dt>Variation</dt><dd>Nova linha sobre código que já existe.<span class="comum">brownfield</span></dd></div>
+        <div><dt>Route</dt><dd>Uma feature, com seu próprio worktree.<span class="comum">feature</span></dd></div>
+        <div><dt>Pitch</dt><dd>Uma task, feita num contexto novo.<span class="comum">task</span></dd></div>
+        <div><dt>Anchor</dt><dd>Checagem ao fim do pitch, com commit de proteção.<span class="comum">checkpoint</span></dd></div>
+        <div><dt>Crux</dt><dd>O pitch mais difícil da route. Recebe o modelo mais forte.<span class="comum">task crítica</span></dd></div>
+        <div><dt>Window</dt><dd>Routes que sobem em paralelo porque não mexem nos mesmos arquivos.<span class="comum">wave</span></dd></div>
+        <div><dt>Send</dt><dd>Os testes selados rodam contra a route pronta.<span class="comum">quality gate</span></dd></div>
+        <div><dt>Fall</dt><dd>O send falhou e o climber volta à última anchor.<span class="comum">gate fail</span></dd></div>
+        <div><dt>Rescue</dt><dd>O Basecamp chama você para decidir.<span class="comum">escalonamento humano</span></dd></div>
+        <div><dt>Summit</dt><dd>A route foi entregue.<span class="comum">entrega</span></dd></div>
+        <div><dt>Descent</dt><dd>Revisão do que houve e propostas de beta.<span class="comum">retrospectiva</span></dd></div>
+      </dl>
+    </div>
+    <div class="grupo">
+      <h3>Papéis</h3>
+      <dl>
+        <div><dt>Basecamp</dt><dd>A state machine em TypeScript. É código, não é agente.<span class="comum">orquestrador</span></dd></div>
+        <div><dt>Setter</dt><dd>Escreve a line e os bolts, como quem desenha uma via.<span class="comum">refinador</span></dd></div>
+        <div><dt>Belayer</dt><dd>Escreve os testes selados e avisa o climber quando ele cai.<span class="comum">autor dos testes</span></dd></div>
+        <div><dt>Climber</dt><dd>Sobe os pitches, um por vez.<span class="comum">implementador</span></dd></div>
+        <div><dt>Inspectors</dt><dd>Segurança, arquitetura e UI.<span class="comum">reviewers</span></dd></div>
+        <div><dt>Scribe</dt><dd>Conduz o descent.<span class="comum">agente de retrospectiva</span></dd></div>
+        <div><dt>Rope team</dt><dd>O conjunto de agentes de uma route.<span class="comum">time da feature</span></dd></div>
+      </dl>
+      <h3 style="margin-top:40px">Artefatos</h3>
+      <dl>
+        <div><dt>Survey</dt><dd>Mapa do código existente.<span class="comum">repo map</span></dd></div>
+        <div><dt>Line</dt><dd>A spec assinada.<span class="comum">spec</span></dd></div>
+        <div><dt>Bolts</dt><dd>O contrato de interface.<span class="comum">contrato</span></dd></div>
+        <div><dt>Seal</dt><dd>A suíte que o climber não vê.<span class="comum">testes ocultos</span></dd></div>
+        <div><dt>Report</dt><dd>Achados de um inspector, com severidade.<span class="comum">findings</span></dd></div>
+        <div><dt>Beta</dt><dd>O que o dev e o descent ensinam sobre o projeto.<span class="comum">arquivos-base</span></dd></div>
+        <div><dt>Pack</dt><dd>O pacote de contexto de cada agente.<span class="comum">context pack</span></dd></div>
+      </dl>
+    </div>
+    <div class="grupo">
+      <h3>Sistema</h3>
+      <dl>
+        <div><dt>Hardness</dt><dd>Fluorite, quartz ou diamond.<span class="comum">trilha</span></dd></div>
+        <div><dt>Brake</dt><dd>Motor de política e hooks. Bloqueia ações fora do estado.<span class="comum">policy engine</span></dd></div>
+        <div><dt>O₂</dt><dd>O orçamento de tokens.<span class="comum">token budget</span></dd></div>
+        <div><dt>Friction</dt><dd>Tudo o que atrasou ou deu errado, registrado por tipo.<span class="comum">fricção</span></dd></div>
+        <div><dt>Calls</dt><dd>O protocolo de mensagens entre agentes.<span class="comum">mailbox</span></dd></div>
+        <div><dt>Lookout</dt><dd>O painel em tempo real.<span class="comum">dashboard</span></dd></div>
+        <div><dt>Gym</dt><dd>Routes conhecidas para treinar e medir o harness.<span class="comum">evals</span></dd></div>
+      </dl>
+    </div>
+  </div>
+</section>
+
+<section class="bloco" id="identidade">
+  <div class="sec-head">
+    <p class="eyebrow">Identidade</p>
+    <h2>As cores da parede</h2>
+    <p class="lede">A paleta vem da parede: o giz das mãos, o granito, o grafite do desenho da via e a corda laranja que mostra quem está subindo. As três hardness têm cor de mineral e aparecem só para indicar trilha.</p>
+  </div>
+  <div class="swatches">
+    <div class="sw"><i style="background:var(--chalk)"></i><b>Chalk</b><span>fundo</span></div>
+    <div class="sw"><i style="background:var(--granite)"></i><b>Granite</b><span>superfícies e painéis</span></div>
+    <div class="sw"><i style="background:var(--graphite)"></i><b>Graphite</b><span>texto e traço do diagrama</span></div>
+    <div class="sw"><i style="background:var(--rope)"></i><b>Rope</b><span>progresso, ação, foco</span></div>
+    <div class="sw"><i style="background:var(--slate)"></i><b>Slate</b><span>texto secundário, friction</span></div>
+    <div class="sw"><i style="background:var(--fluorite)"></i><b>Fluorite</b><span>hardness 4</span></div>
+    <div class="sw"><i style="background:var(--quartz)"></i><b>Quartz</b><span>hardness 7</span></div>
+    <div class="sw"><i style="background:var(--diamond)"></i><b>Diamond</b><span>hardness 10</span></div>
+  </div>
+
+  <div class="id-grid">
+    <div>
+      <h3>Tipografia</h3>
+      <div class="espec"><span class="amostra-d">Pitch 3 · crux</span><small>Archivo condensada · títulos, nomes de etapa, números grandes</small></div>
+      <div class="espec"><span class="amostra-b">O climber volta à última anchor e tenta de novo.</span><small>IBM Plex Sans · texto corrido e interface</small></div>
+      <div class="espec"><span class="amostra-m">send.fall · route B · 2880 px</span><small>Martian Mono · eventos, métricas, CLI e anotações do diagrama</small></div>
+    </div>
+    <div>
+      <h3>Símbolos</h3>
+      <div class="simbolos">
+        <div><svg><use href="#m-base"/></svg>basecamp, scout</div>
+        <div><svg><use href="#m-grampo"/></svg>bolt</div>
+        <div><svg><use href="#m-selo"/></svg>seal</div>
+        <div><svg><use href="#m-parada"/></svg>anchor</div>
+        <div><svg><use href="#m-cadena"/></svg>send</div>
+        <div><svg><use href="#m-vistoria"/></svg>inspection</div>
+        <div><svg><use href="#m-cume"/></svg>summit</div>
+        <div><svg><use href="#m-queda"/></svg>fall</div>
+        <div><span class="hx" aria-hidden="true"></span>friction</div>
+        <div><svg><use href="#m-descida"/></svg>descent</div>
+      </div>
+    </div>
+    <div>
+      <h3>Movimento</h3>
+      <ul class="mov">
+        <li><b>climb</b><span>Constante e lento. O climber avança na velocidade do trabalho real.</span></li>
+        <li><b>fall</b><span>Rápida, com um único tranco quando a corda segura. É o único movimento que quica.</span></li>
+        <li><b>send</b><span>A anchor do topo pulsa enquanto os testes selados rodam.</span></li>
+        <li><b>friction</b><span>Aparece como textura na rocha, sem piscar. Quanto mais densa, mais friction teve aquele trecho.</span></li>
+      </ul>
+    </div>
+    <div>
+      <h3>Regras para nomear</h3>
+      <ul class="nomes">
+        <li>Um termo curto, em inglês, do mundo da escalada ou dos minerais.</li>
+        <li>Cada nome é um estado da state machine e um evento no log. Nome sem estado não entra.</li>
+        <li>Sempre com o termo comum ao lado na CLI e no Lookout.</li>
+        <li>Sem personas. Papéis têm função, não personalidade.</li>
+      </ul>
+    </div>
+    <div style="grid-column:1 / -1">
+      <h3>Voz da CLI</h3>
+<div class="term"><span class="p">$</span> mohs climb "compartilhar protótipo por link"
+  <span class="k">scout   </span>  variation · react + fastify · 3 routes em 1 window
+  <span class="k">hardness</span>  <span class="c">10 diamond</span>  links públicos são área sensível
+  <span class="k">survey  </span>  214 arquivos em 1,9 s · 0 tokens
+  <span class="k">line    </span>  pronta para assinar → <span class="t">mohs sign route-a</span>
+
+<span class="p">$</span> mohs lookout
+  <span class="k">lookout </span>  no ar em http://localhost:4747
+
+<span class="p">$</span> mohs beta
+  <span class="k">descent </span>  2 propostas com evidência → <span class="t">mohs beta accept b-07</span></div>
+    </div>
+    <div style="grid-column:1 / -1">
+      <h3>O brake em uma tela</h3>
+<div class="term"><span class="k"># .mohs/brake.yaml · decide o que bloqueia a route</span>
+block:               [<span class="c">critical</span>, <span class="c">high</span>]
+warn:                [<span class="c">medium</span>]
+ignore:              [<span class="c">low</span>]
+min_confidence:      <span class="t">80</span>
+falls_before_rescue: <span class="t">3</span></div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <span>MOHs · My Own Harness System</span>
+  <span>proposta de identidade para discussão · setembro de 2026</span>
+</footer>
+</main>
+
+<script>
+(function () {
+  var NS = 'http://www.w3.org/2000/svg';
+  var svg = document.getElementById('parede');
+  var TOP = 56, BASE = 344, LOOP = 32, ESCALA = 80, CILINDRO = 1660000;
+  var reduz = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+  var VIAS = [
+    { id: 'A', x: 90, nome: 'Compartilhar protótipo por link', dureza: 'diamond', mohs: 10, enf: 4, o2: 780000, cota: 1200000, fim: 27,
+      keys: [[0,0,'scout'],[1.5,0,'pitch 1'],[4,1,'anchor 1'],[5,1,'pitch 2'],[8,2,'anchor 2'],[9,2,'pitch 3 · crux'],[12,3,'anchor 3'],[13,3,'pitch 4'],[16,4,'send'],[17.2,4,'inspection'],[21,4,'blocked'],[21.6,3.4,'fix'],[24,4,'send'],[25,4,'inspection'],[27,4,'summit']] },
+    { id: 'B', x: 270, nome: 'Exportar tela em PNG', dureza: 'quartz', mohs: 7, enf: 3, o2: 290000, cota: 400000, fim: 22,
+      keys: [[0,0,'scout'],[2,0,'pitch 1'],[5,1,'anchor 1'],[6,1,'pitch 2'],[9,2,'anchor 2'],[10,2,'pitch 3'],[13,3,'send'],[14,3,'fall'],[14.35,1.82,'fall'],[14.6,2,'anchor 2'],[15.4,2,'fix'],[18,3,'send'],[19,3,'inspection'],[22,3,'summit']] },
+    { id: 'C', x: 450, nome: 'Contador de uso em /api/stats', dureza: 'fluorite', mohs: 4, enf: 2, o2: 38000, cota: 60000, fim: 9,
+      keys: [[0,0,'scout'],[1,0,'pitch 1'],[4,1,'anchor 1'],[5,1,'pitch 2'],[8,2,'anchor'],[9,2,'summit']] }
+  ];
+
+  var EVENTOS = [
+    { t: 1.0, tipo: 'CLIMB', rota: 'basecamp → climber C', txt: 'pitch 1 · fluorite · pack de 9k' },
+    { t: 1.5, tipo: 'CLIMB', rota: 'basecamp → climber A', txt: 'pitch 1 · diamond · pack de 21k' },
+    { t: 2.0, tipo: 'CLIMB', rota: 'basecamp → climber B', txt: 'pitch 1 · quartz · pack de 14k' },
+    { t: 4.0, tipo: 'SAFE', rota: 'climber C → basecamp', txt: 'typecheck, lint e 6 testes ok · commit a41c2e0' },
+    { t: 4.1, tipo: 'SAFE', rota: 'climber A → basecamp', txt: 'pitch 1 ok · commit 3f2a91c' },
+    { t: 6.5, tipo: 'friction', rota: 'brake', txt: 'climber B tentou ler e2e/.sealed/ e o brake negou', atrito: { via: 'B', lance: 2, nome: 'brake negou leitura dos testes selados' } },
+    { t: 8.0, tipo: 'SAFE', rota: 'climber C → basecamp', txt: 'pitch 2 ok · test:quick verde' },
+    { t: 9.0, tipo: 'summit', rota: 'route C', txt: 'entregue em 12 min com 38k de O₂' },
+    { t: 10.5, tipo: 'ROCK', rota: 'climber A → basecamp', txt: 'server não sobe: porta 3001 ocupada', atrito: { via: 'A', lance: 3, nome: 'ambiente' } },
+    { t: 11.2, tipo: 'basecamp', rota: 'basecamp', txt: 'liberou a porta 3001 e repetiu a anchor' },
+    { t: 13.0, tipo: 'send', rota: 'route B', txt: 'testes selados rodando em checkout separado · 14 unit, 3 e2e' },
+    { t: 14.0, tipo: 'FALL', rota: 'belayer B → climber B', txt: 'Ao exportar com zoom 200%, a imagem deve ter 1440 px de largura. Veio com 2880 px.', atrito: { via: 'B', lance: 3, nome: 'fall no send' }, queda: true },
+    { t: 16.0, tipo: 'send', rota: 'route A', txt: 'testes selados rodando · 22 unit, 5 e2e' },
+    { t: 17.0, tipo: 'sent', rota: 'route A', txt: '27 de 27 testes selados passaram' },
+    { t: 17.2, tipo: 'inspection', rota: 'route A', txt: 'segurança, arquitetura e UI em paralelo' },
+    { t: 18.0, tipo: 'send', rota: 'route B', txt: 'segunda tentativa' },
+    { t: 19.0, tipo: 'sent', rota: 'route B', txt: '17 de 17 testes selados passaram' },
+    { t: 19.1, tipo: 'inspection', rota: 'route B', txt: 'só UI: o diff toca componentes React' },
+    { t: 21.0, tipo: 'report', rota: 'route A', txt: '1 achado high em segurança · o brake bloqueou a route', atrito: { via: 'A', lance: 4, nome: 'inspection bloqueou' },
+      laudo: [{ id: 'a1', via: 'A', sev: 'high', area: 'security', txt: 'Token do link gerado com Math.random, previsível', acao: 'block' },
+              { id: 'a2', via: 'A', sev: 'medium', area: 'architecture', txt: 'Rota nova fora de server/src/routes', acao: 'warn' }] },
+    { t: 21.9, tipo: 'report', rota: 'route B', txt: '1 medium e 1 low em UI · não bloqueia',
+      laudo: [{ id: 'b1', via: 'B', sev: 'medium', area: 'UI', txt: 'Exportação trava a tela por 1,2 s sem indicador', acao: 'warn' },
+              { id: 'b2', via: 'B', sev: 'low', area: 'UI', txt: 'Botão Exportar sem atalho de teclado', acao: 'ignore' }] },
+    { t: 22.0, tipo: 'summit', rota: 'route B', txt: 'entregue em 29 min com 290k de O₂' },
+    { t: 24.0, tipo: 'send', rota: 'route A', txt: 'testes selados de novo depois do fix' },
+    { t: 25.0, tipo: 'sent', rota: 'route A', txt: 'achado high corrigido', corrige: 'a1' },
+    { t: 27.0, tipo: 'summit', rota: 'route A', txt: 'entregue em 36 min com 780k de O₂' },
+    { t: 28.5, tipo: 'descent', rota: 'scribe', txt: '2 betas propostos com evidência · aguardando sua escolha' }
+  ];
+
+  function el(nome, attrs) {
+    var n = document.createElementNS(NS, nome);
+    for (var k in attrs) n.setAttribute(k, attrs[k]);
+    return n;
+  }
+  function Y(v, p) { return BASE - (p / v.enf) * (BASE - TOP); }
+
+  var legenda = document.getElementById('vias-legenda');
+  VIAS.forEach(function (v) {
+    var g = el('g', { 'class': 'via via-' + v.dureza });
+    g.appendChild(el('line', { x1: v.x, y1: BASE, x2: v.x, y2: TOP, 'class': 'via-linha' }));
+    if (v.dureza !== 'fluorite') {
+      for (var k = 0; k < v.enf; k++) {
+        var ym = (Y(v, k) + Y(v, k + 1)) / 2, xm = v.x - 13;
+        g.appendChild(el('path', { d: 'M' + (xm - 4) + ' ' + (ym - 4) + ' L' + (xm + 4) + ' ' + (ym + 4) + ' M' + (xm + 4) + ' ' + (ym - 4) + ' L' + (xm - 4) + ' ' + (ym + 4), 'class': 'grampo' }));
+      }
+    }
+    v.atritoG = el('g', {});
+    g.appendChild(v.atritoG);
+    v.prog = el('line', { x1: v.x, y1: BASE, x2: v.x, y2: BASE, 'class': 'corda' });
+    g.appendChild(v.prog);
+    for (var j = 1; j < v.enf; j++) g.appendChild(el('circle', { cx: v.x, cy: Y(v, j), r: 5.5, 'class': 'parada' }));
+    v.anc = el('g', { 'class': 'ancora' });
+    v.anc.appendChild(el('circle', { cx: v.x, cy: TOP, r: 8, 'class': 'halo' }));
+    if (v.dureza === 'fluorite') {
+      v.anc.appendChild(el('circle', { cx: v.x, cy: TOP, r: 5.5, 'class': 'parada' }));
+    } else {
+      v.anc.appendChild(el('circle', { cx: v.x, cy: TOP, r: 8, 'class': 'ancora-ext' }));
+      v.anc.appendChild(el('circle', { cx: v.x, cy: TOP, r: 3.5, 'class': 'ancora-int' }));
+    }
+    g.appendChild(v.anc);
+    g.appendChild(el('path', { d: 'M' + (v.x - 14) + ' ' + (BASE + 26) + ' L' + v.x + ' ' + (BASE + 6) + ' L' + (v.x + 14) + ' ' + (BASE + 26) + ' Z', 'class': 'barraca' }));
+    g.appendChild(el('line', { x1: v.x, y1: TOP - 12, x2: v.x, y2: TOP - 44, 'class': 'mastro' }));
+    g.appendChild(el('path', { d: 'M' + v.x + ' ' + (TOP - 44) + ' L' + (v.x + 20) + ' ' + (TOP - 38) + ' L' + v.x + ' ' + (TOP - 32) + ' Z', 'class': 'bandeira' }));
+    v.dot = el('circle', { cx: v.x, cy: BASE, r: 7.5, 'class': 'guia-dot' });
+    g.appendChild(v.dot);
+    v.g = g;
+    svg.appendChild(g);
+
+    var item = document.createElement('div');
+    item.className = 'vl';
+    item.innerHTML = '<span class="vl-id">' + v.id + '</span><b>' + v.nome + '</b><span class="chip d-' + v.dureza + '">' + v.dureza + ' ' + v.mohs + '</span><span class="vl-estado"></span><span class="vl-o2"></span>';
+    v.estadoEl = item.querySelector('.vl-estado');
+    v.o2El = item.querySelector('.vl-o2');
+    legenda.appendChild(item);
+  });
+
+  var feed = document.getElementById('feed');
+  var laudoEl = document.getElementById('laudo');
+  var atritoEl = document.getElementById('atrito');
+  var elTempo = document.getElementById('m-tempo');
+  var elO2 = document.getElementById('m-o2');
+  var elBar = document.getElementById('m-o2-bar');
+  var elQuedas = document.getElementById('m-quedas');
+  var elAtritos = document.getElementById('m-atritos');
+  var btnPlay = document.getElementById('m-play');
+  var btnReset = document.getElementById('m-reset');
+
+  var estado;
+  function limpa() {
+    estado = { quedas: 0, atritos: [], laudo: [], lances: {} };
+    feed.innerHTML = '';
+    VIAS.forEach(function (v) { while (v.atritoG.firstChild) v.atritoG.removeChild(v.atritoG.firstChild); });
+    desenhaLaudo();
+    desenhaAtrito();
+  }
+
+  function relogio(t) {
+    var s = Math.round(t * ESCALA), m = Math.floor(s / 60), r = s % 60;
+    return (m < 10 ? '0' : '') + m + ':' + (r < 10 ? '0' : '') + r;
+  }
+  function fmtO2(n) {
+    if (n >= 1e6) return (n / 1e6).toFixed(2).replace('.', ',') + 'M';
+    return Math.round(n / 1000) + 'k';
+  }
+
+  function posEm(keys, t) {
+    if (t <= keys[0][0]) return { p: keys[0][1], rot: keys[0][2] };
+    for (var i = 0; i < keys.length - 1; i++) {
+      var a = keys[i], b = keys[i + 1];
+      if (t >= a[0] && t < b[0]) {
+        var u = (t - a[0]) / (b[0] - a[0]);
+        var e = b[1] < a[1] ? u * u : 1 - (1 - u) * (1 - u);
+        return { p: a[1] + (b[1] - a[1]) * e, rot: a[2] };
+      }
+    }
+    var k = keys[keys.length - 1];
+    return { p: k[1], rot: k[2] };
+  }
+
+  function dispara(ev, anima) {
+    var li = document.createElement('li');
+    if (anima && !reduz) li.className = 'novo';
+    li.innerHTML = '<span class="hora">' + relogio(ev.t) + '</span><div class="linha"><span class="voz v-' + ev.tipo + '">' + ev.tipo.toUpperCase() + '</span><span class="rota">' + ev.rota + '</span><span class="txt">' + ev.txt + '</span></div>';
+    feed.insertBefore(li, feed.firstChild);
+    while (feed.children.length > 6) feed.removeChild(feed.lastChild);
+    if (ev.queda) estado.quedas++;
+    if (ev.atrito) {
+      estado.atritos.push(ev.atrito);
+      var chave = ev.atrito.via + ':' + ev.atrito.lance;
+      estado.lances[chave] = (estado.lances[chave] || 0) + 1;
+      desenhaHachura(ev.atrito, estado.lances[chave]);
+      desenhaAtrito();
+    }
+    if (ev.laudo) { estado.laudo = ev.laudo.map(function (l) { return Object.assign({}, l); }).concat(estado.laudo); desenhaLaudo(); }
+    if (ev.corrige) { estado.laudo.forEach(function (l) { if (l.id === ev.corrige) l.corrigida = true; }); desenhaLaudo(); }
+  }
+
+  function desenhaHachura(a, n) {
+    var v = VIAS.filter(function (x) { return x.id === a.via; })[0];
+    var y1 = Y(v, a.lance), y0 = Y(v, a.lance - 1);
+    var r = v.atritoG.querySelector('[data-lance="' + a.lance + '"]');
+    if (!r) { r = el('rect', { x: v.x + 12, y: y1 + 6, height: y0 - y1 - 12, 'class': 'atrito-rect', 'data-lance': a.lance }); v.atritoG.appendChild(r); }
+    r.setAttribute('width', 7 * n);
+  }
+
+  function desenhaLaudo() {
+    if (!estado || !estado.laudo.length) { laudoEl.innerHTML = '<li class="vazio">Nenhum report ainda. Os inspectors gravam aqui quando uma route é sent.</li>'; return; }
+    laudoEl.innerHTML = estado.laudo.map(function (l) {
+      return '<li class="' + (l.corrigida ? 'corrigida' : '') + '"><span class="sev ' + l.sev + '">' + l.sev.toUpperCase() + '</span><span class="txt">route ' + l.via + ' · ' + l.area + ': ' + l.txt + '</span><span class="acao">' + (l.corrigida ? 'fixed' : l.acao) + '</span></li>';
+    }).join('');
+  }
+
+  function desenhaAtrito() {
+    if (!estado || !estado.atritos.length) { atritoEl.innerHTML = '<li class="vazio">Sem friction até agora.</li>'; return; }
+    atritoEl.innerHTML = estado.atritos.slice().reverse().map(function (a) {
+      return '<li><span class="hx" aria-hidden="true"></span><span>' + a.nome + '</span><span class="n">route ' + a.via + ' · L' + a.lance + '</span></li>';
+    }).join('');
+  }
+
+  function desenha(t) {
+    var gasto = 0;
+    VIAS.forEach(function (v) {
+      var s = posEm(v.keys, t);
+      var y = Y(v, s.p);
+      v.dot.setAttribute('cy', y.toFixed(1));
+      v.prog.setAttribute('y2', y.toFixed(1));
+      v.g.classList.toggle('caindo', s.rot === 'fall');
+      v.g.classList.toggle('no-cume', s.rot === 'summit');
+      v.anc.classList.toggle('ativa', s.rot === 'send');
+      if (v.estadoEl.textContent !== s.rot) v.estadoEl.textContent = s.rot;
+      var usado = (v.o2 / v.fim) * Math.min(t, v.fim);
+      gasto += usado;
+      v.o2El.textContent = 'O₂ ' + fmtO2(usado) + ' de ' + fmtO2(v.cota);
+    });
+    elTempo.textContent = relogio(Math.min(t, LOOP));
+    elO2.textContent = fmtO2(gasto);
+    elBar.style.width = (gasto / CILINDRO * 100).toFixed(1) + '%';
+    elQuedas.textContent = estado.quedas;
+    elAtritos.textContent = estado.atritos.length;
+  }
+
+  var t = 0, tocando = !reduz, ultimo = null;
+  function ate(alvo, anima) {
+    EVENTOS.forEach(function (ev) { if (ev.t > t && ev.t <= alvo) dispara(ev, anima); });
+    t = alvo;
+    desenha(t);
+  }
+  function recomeca(inicio) { limpa(); t = 0; ate(inicio, false); }
+
+  function quadro(ts) {
+    if (ultimo === null) ultimo = ts;
+    var dt = Math.min(0.1, (ts - ultimo) / 1000);
+    ultimo = ts;
+    if (tocando) {
+      var alvo = t + dt;
+      if (alvo > LOOP) { recomeca(0); } else { ate(alvo, true); }
+    }
+    requestAnimationFrame(quadro);
+  }
+
+  btnPlay.addEventListener('click', function () {
+    tocando = !tocando;
+    btnPlay.textContent = tocando ? 'Pausar' : 'Reproduzir';
+  });
+  btnReset.addEventListener('click', function () { recomeca(0); });
+
+  recomeca(reduz ? 21.95 : 6);
+  btnPlay.textContent = tocando ? 'Pausar' : 'Reproduzir';
+  requestAnimationFrame(quadro);
+})();
+</script>

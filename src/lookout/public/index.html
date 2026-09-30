@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="pt-BR">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Lookout · MOHs</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@62..125,400..900&family=IBM+Plex+Sans:wght@400;500;600&family=Martian+Mono:wght@400;500&display=swap"
+    />
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="brand">
+        <span class="word" aria-label="MOHs">M<span class="o">O</span>Hs</span><span class="app">Lookout</span>
+      </div>
+      <label class="picker" for="climb-select"
+        ><span class="eyebrow">climb</span
+        ><select id="climb-select" disabled></select
+      ></label>
+      <span class="conn" id="conn" data-state="off">conectando…</span>
+    </header>
+
+    <main class="wrap">
+      <section id="empty" class="empty" hidden>
+        <p class="eyebrow">Lookout</p>
+        <h1>Nenhum climb ainda</h1>
+        <p>Rode um climb de exemplo em outro terminal e ele aparece aqui na hora:</p>
+        <pre>node src/cli.ts climb --crew fake</pre>
+      </section>
+
+      <section id="climb" hidden>
+        <div class="head">
+          <p class="eyebrow" id="c-meta"></p>
+          <h1 id="c-request"></h1>
+          <div class="head-row">
+            <span id="c-hardness"></span>
+            <span class="state" id="c-state"></span>
+          </div>
+        </div>
+
+        <div class="metrics">
+          <div class="metric"><span>tempo</span><b id="m-time">00:00</b></div>
+          <div class="metric o2">
+            <span>O₂ gasto</span><b id="m-o2">0</b><i class="gauge" aria-hidden="true"><i id="m-o2-bar"></i></i
+            ><small id="m-o2-cap"></small>
+          </div>
+          <div class="metric"><span>falls</span><b id="m-falls">0</b></div>
+          <div class="metric"><span>friction</span><b id="m-friction">0</b></div>
+          <div class="metric"><span>routes no summit</span><b id="m-summit">0</b></div>
+        </div>
+
+        <div id="action"></div>
+
+        <div class="board">
+          <div class="wall-wrap">
+            <svg id="wall" role="img" aria-label="Parede com as routes do climb">
+              <defs>
+                <pattern id="hatch" width="5" height="5" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+                  <rect width="1.8" height="5" class="hatch-stroke" />
+                </pattern>
+              </defs>
+            </svg>
+            <div class="legend" id="legend"></div>
+            <p class="avg" id="avg"></p>
+          </div>
+          <aside class="side">
+            <section>
+              <h2>Calls e eventos</h2>
+              <ol class="feed" id="feed"></ol>
+            </section>
+            <section>
+              <h2>Report</h2>
+              <ul class="report" id="report"></ul>
+            </section>
+            <section>
+              <h2>Friction</h2>
+              <ul class="friction" id="friction"></ul>
+            </section>
+          </aside>
+        </div>
+
+        <section class="descent" id="descent" hidden>
+          <h2>Descent</h2>
+          <p class="hint">Propostas do scribe. Na fase 5 você escolhe quais entram com <code>mohs beta accept &lt;id&gt;</code>.</p>
+          <ul id="proposals"></ul>
+        </section>
+      </section>
+    </main>
+
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script type="module" src="/js/main.js"></script>
+  </body>
+</html>

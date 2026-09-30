@@ -1,0 +1,9 @@
+node_modules/
+.mohs/climbs/
+.DS_Store
+
+# Validações do harness (docs/VALIDATION.md): ficam só na máquina de quem roda
+.validation/
+
+# Anotações cruas da pesquisa (trechos de terceiros); a síntese fica em reports/
+research_notes/

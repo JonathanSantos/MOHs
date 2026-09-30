@@ -1,0 +1,58 @@
+{
+  "concluir-direto": {
+    "tokens": 50856,
+    "tools": 4,
+    "ms": 27034,
+    "decisions": 4,
+    "note": "completedAt no lugar de done; complete devolve boolean; idempotente; pending:false devolve todas"
+  },
+  "salvar-direto": {
+    "tokens": 50306,
+    "tools": 4,
+    "ms": 29954,
+    "decisions": 4,
+    "note": "formato {nextId, tasks}; valida dados; não reaproveita id; cópias independentes"
+  },
+  "renomear-direto": {
+    "tokens": 51990,
+    "tools": 5,
+    "ms": 39473,
+    "decisions": 4,
+    "note": "id inexistente devolve null; valida título antes do id; devolve cópia; corrigiu add que gastava id com título inválido"
+  },
+  "prioridade-direto": {
+    "tokens": 52525,
+    "tools": 6,
+    "ms": 37118,
+    "decisions": 0,
+    "note": "relato final veio vazio ('Placeholder'); só o código fala"
+  },
+  "concluir-mohs": {
+    "tokens": 60904,
+    "tools": 9,
+    "ms": 59559,
+    "decisions": 4,
+    "note": "completedAt; complete devolve boolean; idempotente; só pending:true filtra — tudo em 'Decisões a confirmar' na line"
+  },
+  "renomear-mohs": {
+    "tokens": 62329,
+    "tools": 9,
+    "ms": 61017,
+    "decisions": 5,
+    "note": "id inexistente null; valida título antes; cópia; mesmo título permitido; sem updatedAt — na line"
+  },
+  "prioridade-mohs": {
+    "tokens": 61723,
+    "tools": 11,
+    "ms": 63622,
+    "decisions": 6,
+    "note": "comparação estrita; valida antes de consumir id; sort desconhecido é erro; null inválido — na line; 1º plan recusado (título > 120)"
+  },
+  "salvar-mohs": {
+    "tokens": 63922,
+    "tools": 10,
+    "ms": 82768,
+    "decisions": 5,
+    "note": "{nextId, tasks}; valida e lança 'dados inválidos'; cópias; createdAt não validado — na line"
+  }
+}

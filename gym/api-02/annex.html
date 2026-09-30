@@ -1,0 +1,108 @@
+<h2>O teste</h2>
+<p class="muted">
+  O mesmo pedido grande das duas rodadas, no projeto <code>tarefas</code> (<code>template/</code>): prioridade e <code>complete</code>,
+  persistência em arquivo e um servidor HTTP sem dependências. Um subagente orquestrador seguiu a skill do MOHs e criou um subagente por
+  papel e route. Eu fiz o papel de humano: assinei a line, os bolts da C e a entrega da C. A suíte escondida
+  (<code>hidden/api.test.js</code>, 5 testes) nunca foi mostrada a ninguém.
+</p>
+
+<div class="tiles">
+  <div class="tile">
+    <span class="label">Suíte escondida</span><span class="value">5/5</span><span class="sub">na entrega, sem merge manual</span>
+  </div>
+  <div class="tile"><span class="label">Conflitos</span><span class="value">0</span><span class="sub">3 merges na entrega</span></div>
+  <div class="tile"><span class="label">Checagem final</span><span class="value">14/14</span><span class="sub">na 1ª tentativa</span></div>
+  <div class="tile"><span class="label">Falls</span><span class="value">0</span><span class="sub">nenhum rescue</span></div>
+  <div class="tile"><span class="label">Testes</span><span class="value">554</span><span class="sub">88 visíveis + 466 selados</span></div>
+  <div class="tile"><span class="label">Humano</span><span class="value">~3 min</span><span class="sub">3 assinaturas</span></div>
+</div>
+
+<h3>Rodada 1 × rodada 2</h3>
+<div class="scroll">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th>Rodada 1 · MOHs 5.0</th>
+        <th>Rodada 2 · MOHs 5.1</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Plano</td>
+        <td>2 routes paralelas, sem dependência entre elas</td>
+        <td>A primeiro, depois B e C em paralelo (<code>after: A</code>)</td>
+      </tr>
+      <tr>
+        <td>Dureza</td>
+        <td>quartz</td>
+        <td>diamond: line, bolts da C e entrega da C assinados por um humano</td>
+      </tr>
+      <tr>
+        <td>Suíte escondida</td>
+        <td>0/5 e 1/5 por branch; 5/5 só com merge manual</td>
+        <td><strong>5/5 na branch de entrega</strong> (A e B isoladas não carregam; C isolada 4/5)</td>
+      </tr>
+      <tr>
+        <td>Integração</td>
+        <td>não existia</td>
+        <td>merge por janela, checagem final com os selados de todas as routes</td>
+      </tr>
+      <tr>
+        <td>Agentes</td>
+        <td>13 tarefas; climbers duplicados, sem posse de tarefa</td>
+        <td>16 tarefas, 14 agentes, nenhuma tarefa disputada (<code>--as</code>)</td>
+      </tr>
+      <tr>
+        <td>Testes selados</td>
+        <td>6 arquivos</td>
+        <td>13 arquivos (113 testes na B, 353 na C)</td>
+      </tr>
+      <tr>
+        <td>Achados dos inspectors</td>
+        <td>2, todos low</td>
+        <td>8: 2 medium (duplicação de regras, DNS rebinding) e 6 low</td>
+      </tr>
+      <tr>
+        <td>O₂ do harness</td>
+        <td>27 mil</td>
+        <td>105 mil (60% nos inspectors)</td>
+      </tr>
+      <tr>
+        <td>Tokens do orquestrador</td>
+        <td>~105 mil</td>
+        <td>~164 mil</td>
+      </tr>
+      <tr>
+        <td>Duração</td>
+        <td>13 min</td>
+        <td>60 min (36 só no seal da C)</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<h3>O que aprendemos</h3>
+<ul>
+  <li>
+    <strong>Resolvido:</strong> as dependências e a integração. A entrega saiu pronta, e o merge manual da rodada 1 deixou de ser
+    necessário.
+  </li>
+  <li><strong>Resolvido:</strong> a posse de tarefa. Nenhum climber duplicado e nenhum comando falhou.</li>
+  <li>
+    <strong>Gargalo:</strong> a route A (fluorite, sem seal) esperou 36 min pelo belayer da C. O rigging segura todas as routes até o último
+    seal.
+  </li>
+  <li>
+    <strong>Custo:</strong> o pack do inspector leva o diff inteiro (39 a 72 KB, com ~830 linhas de teste). É por isso que os inspectors
+    ficam com 60% do O₂.
+  </li>
+  <li>
+    <strong>Sigilo:</strong> um <code>mohs next</code> sem <code>--role</code> mostrou a tarefa do belayer ao orquestrador. Não vazou teste,
+    mas a porta está aberta.
+  </li>
+  <li>
+    <strong>Atrito:</strong> os limites de tamanho (400 e 280 caracteres) só aparecem no fim da tarefa. Três papéis levaram recusa por isso.
+  </li>
+  <li><strong>Pendente:</strong> 4 propostas do scribe esperam o humano (<code>mohs beta</code>).</li>
+</ul>

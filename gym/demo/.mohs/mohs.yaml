@@ -1,0 +1,11 @@
+# Projeto de demonstração: um editor de protótipos fictício (React + Vite no web, Fastify no server, Playwright no e2e).
+extends: ["mohs:react", "mohs:fastify", "mohs:playwright"]
+
+commands:
+  anchor: ["npm run test:quick"]
+  send: ["npm run test:full"]
+  dev: npm run dev
+
+models:
+  climber: kimi-k2.7-code
+  crux: claude-sonnet-5-5

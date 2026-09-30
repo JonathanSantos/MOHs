@@ -1,0 +1,286 @@
+[
+  {
+    "name": "concluir-direto",
+    "task": "concluir",
+    "arm": "direto",
+    "usage": {
+      "tokens": 50856,
+      "tools": 4,
+      "ms": 27034,
+      "decisions": 4,
+      "note": "completedAt no lugar de done; complete devolve boolean; idempotente; pending:false devolve todas"
+    },
+    "projectTests": {
+      "pass": 10,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 5,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 75,
+      "removed": 3
+    }
+  },
+  {
+    "name": "concluir-mohs",
+    "task": "concluir",
+    "arm": "mohs",
+    "usage": {
+      "tokens": 60904,
+      "tools": 9,
+      "ms": 59559,
+      "decisions": 4,
+      "note": "completedAt; complete devolve boolean; idempotente; só pending:true filtra — tudo em 'Decisões a confirmar' na line"
+    },
+    "projectTests": {
+      "pass": 11,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 5,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 85,
+      "removed": 3
+    },
+    "branch": "mohs/20260929-1951-b63b/A",
+    "mainClean": true,
+    "climb": {
+      "id": "20260929-1951-b63b",
+      "state": "done",
+      "hardness": "fluorite",
+      "pitches": 1,
+      "retries": 0,
+      "friction": {
+        "crew.note": 1
+      },
+      "o2": 1506,
+      "lineLines": 32,
+      "decisions": 4,
+      "tasks": 3,
+      "seconds": 41
+    }
+  },
+  {
+    "name": "prioridade-direto",
+    "task": "prioridade",
+    "arm": "direto",
+    "usage": {
+      "tokens": 52525,
+      "tools": 6,
+      "ms": 37118,
+      "decisions": 0,
+      "note": "relato final veio vazio ('Placeholder'); só o código fala"
+    },
+    "projectTests": {
+      "pass": 9,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 5,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 72,
+      "removed": 4
+    }
+  },
+  {
+    "name": "prioridade-mohs",
+    "task": "prioridade",
+    "arm": "mohs",
+    "usage": {
+      "tokens": 61723,
+      "tools": 11,
+      "ms": 63622,
+      "decisions": 6,
+      "note": "comparação estrita; valida antes de consumir id; sort desconhecido é erro; null inválido — na line; 1º plan recusado (título > 120)"
+    },
+    "projectTests": {
+      "pass": 11,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 5,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 79,
+      "removed": 4
+    },
+    "branch": "mohs/20260929-1951-72b4/A",
+    "mainClean": true,
+    "climb": {
+      "id": "20260929-1951-72b4",
+      "state": "done",
+      "hardness": "fluorite",
+      "pitches": 1,
+      "retries": 0,
+      "friction": {
+        "crew.note": 1
+      },
+      "o2": 1643,
+      "lineLines": 35,
+      "decisions": 4,
+      "tasks": 3,
+      "seconds": 49
+    }
+  },
+  {
+    "name": "renomear-direto",
+    "task": "renomear",
+    "arm": "direto",
+    "usage": {
+      "tokens": 51990,
+      "tools": 5,
+      "ms": 39473,
+      "decisions": 4,
+      "note": "id inexistente devolve null; valida título antes do id; devolve cópia; corrigiu add que gastava id com título inválido"
+    },
+    "projectTests": {
+      "pass": 10,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 4,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 71,
+      "removed": 2
+    }
+  },
+  {
+    "name": "renomear-mohs",
+    "task": "renomear",
+    "arm": "mohs",
+    "usage": {
+      "tokens": 62329,
+      "tools": 9,
+      "ms": 61017,
+      "decisions": 5,
+      "note": "id inexistente null; valida título antes; cópia; mesmo título permitido; sem updatedAt — na line"
+    },
+    "projectTests": {
+      "pass": 11,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 4,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 83,
+      "removed": 2
+    },
+    "branch": "mohs/20260929-1951-d364/A",
+    "mainClean": true,
+    "climb": {
+      "id": "20260929-1951-d364",
+      "state": "done",
+      "hardness": "fluorite",
+      "pitches": 1,
+      "retries": 0,
+      "friction": {
+        "crew.note": 1
+      },
+      "o2": 1445,
+      "lineLines": 27,
+      "decisions": 4,
+      "tasks": 3,
+      "seconds": 45
+    }
+  },
+  {
+    "name": "salvar-direto",
+    "task": "salvar",
+    "arm": "direto",
+    "usage": {
+      "tokens": 50306,
+      "tools": 4,
+      "ms": 29954,
+      "decisions": 4,
+      "note": "formato {nextId, tasks}; valida dados; não reaproveita id; cópias independentes"
+    },
+    "projectTests": {
+      "pass": 9,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 4,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 104,
+      "removed": 2
+    }
+  },
+  {
+    "name": "salvar-mohs",
+    "task": "salvar",
+    "arm": "mohs",
+    "usage": {
+      "tokens": 63922,
+      "tools": 10,
+      "ms": 82768,
+      "decisions": 5,
+      "note": "{nextId, tasks}; valida e lança 'dados inválidos'; cópias; createdAt não validado — na line"
+    },
+    "projectTests": {
+      "pass": 12,
+      "fail": 0,
+      "failing": []
+    },
+    "acceptance": {
+      "pass": 4,
+      "fail": 0,
+      "failing": []
+    },
+    "diff": {
+      "files": ["src/tasks.js", "test/tasks.test.js"],
+      "added": 154,
+      "removed": 4
+    },
+    "branch": "mohs/20260929-1951-c13b/A",
+    "mainClean": true,
+    "climb": {
+      "id": "20260929-1951-c13b",
+      "state": "done",
+      "hardness": "fluorite",
+      "pitches": 1,
+      "retries": 0,
+      "friction": {
+        "crew.note": 1
+      },
+      "o2": 1662,
+      "lineLines": 33,
+      "decisions": 3,
+      "tasks": 3,
+      "seconds": 65
+    }
+  }
+]
